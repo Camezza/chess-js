@@ -1,11 +1,7 @@
-const readline = require('readline');
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+const prompt = require('prompt-sync')();
 
 const horizontal_order = ["A", "B", "C", "D", "E", "F", "G", "H"];
-const vertical_order = [1, 2, 3, 4, 5, 6, 7, 8];
+const vertical_order = ["1", "2", "3", "4", "5", "6", "7", "8"];
 
 function type(id, infinite, cost, moves, firstmoves, takemoves) {
     this.id = id;
@@ -235,7 +231,6 @@ function displayBoard(board, colour, move_sequence) {
 
         default:
             throw (`Invalid colour specified "${colour}".`);
-            break;
     }
     return display;
 }
@@ -412,11 +407,10 @@ function generateGame(id, board, white, black, whitefirst) {
     this.active = true;
 };
 
-function prompt(question, callback) {
-    rl.question(question, (answer) => {
-        callback(answer);
-        rl.close();
-    });
+// Displays a prompt, and runs a callback function after input is given. Returns the value of that function.
+function cbprompt(question, callback) {
+    let value = prompt(question);
+    return callback(value);
 }
 
 // Prompts the player to choose a valid piece on the board to move.
@@ -460,7 +454,7 @@ function startGame(game) {
         }
 
         displayPieces(piece_array);
-        prompt("> ", getLocationBySquare);
+        console.log(cbprompt("> ", getLocationBySquare));
     }
     choosePiece('white');
 }
