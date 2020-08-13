@@ -281,20 +281,19 @@ function updateBoard(board, piece_array) {
 }
 
 function getLocationBySquare(square) {
-    if (square.length !== 2) {
-        throw (`Invalid square specified '${square}.'`);
-    }
+    if (square.length === 2) {
 
-    let letter = square[0].toString();
-    let number = square[1].toString();
+        let letter = square[0].toString();
+        let number = square[1].toString();
 
-    console.log(`${letter}${number}`);
-    if (horizontal_order.includes(letter) && vertical_order.includes(number)) {
-        let x = horizontal_order.indexOf(letter);
-        let y = vertical_order.indexOf(number);
-        return [x, y];
+        console.log(`${letter}${number}`);
+        if (horizontal_order.includes(letter) && vertical_order.includes(number)) {
+            let x = horizontal_order.indexOf(letter);
+            let y = vertical_order.indexOf(number);
+            return [x, y];
+        }
     }
-    throw (`Invalid letter/number specified.`);
+    return null;
 }
 
 // Removes a piece from a piece array and returns the updated array
