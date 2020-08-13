@@ -143,6 +143,9 @@ function displayBoard(board, colour, move_sequence) {
         let display_row = [];
         let row = board[row_number];
 
+        // Display numbers on the side of board
+        display_row.push(`${"\x1b[31m"}${vertical_order[row_number]}${"\x1b[0m"} `);
+
         // Run for each square in row
         for (let square_number = 0, maximum_squares = row.length; square_number < maximum_squares; square_number++) {
             let prefix = "\x1b[0m", suffix = "\x1b[0m";
