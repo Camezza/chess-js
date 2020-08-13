@@ -282,11 +282,9 @@ function updateBoard(board, piece_array) {
 
 function getLocationBySquare(square) {
     if (square.length === 2) {
-
         let letter = square[0].toString();
         let number = square[1].toString();
 
-        console.log(`${letter}${number}`);
         if (horizontal_order.includes(letter) && vertical_order.includes(number)) {
             let x = horizontal_order.indexOf(letter);
             let y = vertical_order.indexOf(number);
@@ -397,12 +395,12 @@ function getValidMoves(board, piece) {
     return valid_moves;
 }
 
-function generateGame(id, board, white, black, whitefirst) {
+function generateGame(id, board, white, black, turn) {
     this.id = id;
     this.board = board;
     this.white = white;
     this.black = black;
-    this.whitefirst = whitefirst;
+    this.turn = turn; // True is white, false is black.
     this.active = true;
 };
 
@@ -412,31 +410,63 @@ function cbprompt(question, callback) {
     return callback(value);
 }
 
-// Prompts the player to choose a valid piece on the board to move.
-function displayPieces(piece_array) {
-    let piece_display = "";
+function getPieceByLocation(piece_array, vec2) {
+    for (let i = 0, il = piece_array.length; i < il; i++) {
+        let piece = piece_array[i];
 
-    // Get colour pieces on board | make it get allowed moves
+        // Match found
+        if (piece.location[0] === vec2[0] && piece.location[1] === vec2[1]) {
+            return piece;
+        }
+    }
+    return null;
+}
+
+function getValidPieces(board, piece_array) {
+    let return_piece_array = [];
     for (let i = 0, il = piece_array.length; i < il; i++) {
         let piece = piece_array[i];
         let moves = getValidMoves(board, piece);
 
         // Possible moves
         if (moves.length > 0) {
-            piece_display += `[${piece.type.id} at ${getSquare(board, piece.location).square}]${(i + 1) === il ? '.' : ','} `;
+            return_piece_array.push(piece);
         }
     }
-    console.log(`Select a piece by typing its square. (Example: A2)\nMoveable pieces: ${piece_display}`);
+    return return_piece_array;
+}
+
+// Prompts the player to choose a valid piece on the board to move.
+function displayPieces(board, piece_array) {
+    let piece_display = "";
+
+    // Get colour pieces on board | make it get allowed moves
+    for (let i = 0, il = piece_array.length; i < il; i++) {
+        let piece = piece_array[i];
+        piece_display += `[${piece.type.id} at ${getSquare(board, piece.location).square}]${(i + 1) === il ? '.' : ','} `;
+    }
+    return piece_display;
+}
+
+function displayMoves(board, moves) {
+    let move_display = "";
+
+    for (let i = 0, il = moves.length; i < il; i++) {
+        let move = moves[i];
+        let square = getSquare(board, move);
+        let prefix = square.occupation === null ? "" : `Take ${square.occupation.type.id} at `;
+        move_display += `[${prefix}${square.square}]${i+1 === il ? "." : ","} `;
+    }
+    return move_display;
 }
 
 function startGame(game) {
-    let colour = game.whitefirst ? "white" : "black";
+    let board = game.board;
     console.log(`\nStarting game '${game.id}'.`);
-    console.log(`${colour} will move first.\n`);
-    console.log(displayBoard(board, colour));
+    console.log(`${game.turn ? "white" : "black"} will move first.\n`);
 
     function choosePiece(colour) {
-        let piece_array;
+        let piece_array, piece_display, return_piece = null;
 
         // Display possible moves for a specific colour
         switch (colour) {
@@ -451,11 +481,94 @@ function startGame(game) {
             default:
                 throw ("No colour defined.");
         }
+        piece_array = getValidPieces(board, piece_array);
+        piece_display = displayPieces(board, piece_array);
+        console.log(displayBoard(board, colour));
+        console.log(`Select a piece by typing its square. (Example: A2)\nMoveable pieces: ${piece_display}`);
 
-        displayPieces(piece_array);
-        console.log(cbprompt("> ", getLocationBySquare));
+        // Prompt again if invalid selection given
+        while (return_piece === null) {
+            let selection = cbprompt("> ", getLocationBySquare);
+
+            // Valid selection given
+            if (selection !== null) {
+                let piece = getPieceByLocation(piece_array, selection);
+
+                // Match found
+                if (piece !== null) {
+                    return_piece = piece;
+                    break;
+                } else console.log("\nInvalid piece selected.\n"); // Invalid piece (null)
+            } else console.log("\nInvalid square selected.\n"); // Invalid square (null)
+        }
+        return return_piece;
     }
-    choosePiece('white');
+
+    function chooseMove(piece) {
+        let return_move = null;
+        let moves = getValidMoves(board, piece);
+        console.log(displayBoard(board, colour, moves));
+        console.log(`\nYou selected your ${piece.type.id}. No taking it back.\nMove by typing the square to move to. (Example: A1)\n\nPossible moves: ${displayMoves(board, moves)}`);
+
+        // Prompt again if invalid selection given
+        while (return_move === null) {
+            let selection = cbprompt("> ", getLocationBySquare);
+
+            // Valid selection given
+            if (selection !== null) {
+                return_move = selection;
+                /*
+                let square = getSquare(board, selection);
+
+                if (square.occupation !== null) {
+                    removePiece(black, square.occupation);
+                }
+                */
+
+            } else console.log("Invalid square selected.");
+
+        }
+        return return_move;
+    }
+
+    function movePiece(piece, move) {
+        let current_square = getSquare(board, piece.location);
+        let move_square = getSquare(board, move);
+
+        // Taking a piece
+        if (move_square.occupation !== null) {
+
+            // White's turn, remove the black piece.
+            if (game.turn) {
+                black = removePiece(black, move_square.occupation);
+            }
+
+            // Black's turn, remove a white piece.
+            else if (!game.turn) {
+                white = removePiece(white, move_square.occupation);
+            }
+
+            else throw("Strange error occured..."); // This error is very hard to get
+        }
+
+        // It is no longer the first move
+        if (!piece.moved) {
+            piece.moved = true;
+        }
+
+        current_square.occupation = null; // Clear previous square
+        piece.location = move;
+    }
+
+    while (game.active) {
+        colour = game.turn ? "white" : "black";
+        let piece = choosePiece(colour); // Prompt the user to enter a piece.
+        let move = chooseMove(piece); // Prompt the user to choose a move.
+        movePiece(piece, move); // Update the piece's new position.
+        updateBoard(board, white); // Update white pieces
+        updateBoard(board, black); // Update black pieces
+        game.turn = !game.turn; // Change turns.
+    }
 }
 
 var board = generateBoard();
