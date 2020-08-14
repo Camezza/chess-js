@@ -196,6 +196,14 @@ function displayBoard(board, colour, move_sequence) {
     // For white perspective: Row loop descending (--), square loop ascending (++).
     */
 
+    /*
+    let horizontal_display = `   `;
+    for (let i = 0, il = board.length; i < il; i++) {
+        horizontal_display += `${"\x1b[31m"}${horizontal_order[i]}${"\x1b[0m"}   `;
+    }
+    display_board.push(horizontal_display);
+    */
+   
     // Every row
     function whitePerspective() {
         for (let row_number = display_board.length - 1, maximum_rows = 0; row_number >= maximum_rows; row_number--) {
