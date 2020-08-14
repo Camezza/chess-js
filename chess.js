@@ -576,6 +576,7 @@ function startGame(game) {
         }
 
         current_square.occupation = null; // Clear previous square
+        move_square.occupation = null; // Clear move square
         piece.location = move;
     }
 
