@@ -138,14 +138,6 @@ function displayBoard(board, colour, move_sequence) {
         return false;
     }
 
-    // Display square letters above/below the board
-    let bigrow = [];
-    for (let i = 0, il = board.length; i < il; i++) {
-        bigrow.push(`${"\x1b[31m"}${horizontal_order[i]}${"\x1b[0m"}   `);
-    }
-    bigrow = 
-    display_board.push(bigrow);
-
     // Run for each board row
     for (let row_number = 0, maximum_rows = board.length; row_number < maximum_rows; row_number++) {
         let display_row = [];
@@ -199,6 +191,12 @@ function displayBoard(board, colour, move_sequence) {
         display_board.push(display_row);
     }
 
+        // Display square letters above/below the board
+        let bigrow = [];
+        for (let i = 0, il = board.length; i < il; i++) {
+            bigrow.push(`${"\x1b[31m"}${horizontal_order[i]}${"\x1b[0m"}   `);
+        }
+
     /*
     // For black perspective: Row loop ascending (++), square loop descending (--).
     // For white perspective: Row loop descending (--), square loop ascending (++).
@@ -214,6 +212,8 @@ function displayBoard(board, colour, move_sequence) {
 
     // Every row
     function whitePerspective() {
+        bigrow.unshift("   "); // Left spacer for grid letters
+        display_board.unshift(bigrow);
         for (let row_number = display_board.length - 1, maximum_rows = 0; row_number >= maximum_rows; row_number--) {
             let display_row = display_board[row_number];
 
@@ -227,6 +227,8 @@ function displayBoard(board, colour, move_sequence) {
     }
 
     function blackPerspective() {
+        bigrow.push(" "); // Right spacer for grid letters
+        display_board.unshift(bigrow);
         for (let row_number = 0, maximum_rows = display_board.length; row_number < maximum_rows; row_number++) {
             let display_row = display_board[row_number];
 
