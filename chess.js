@@ -334,8 +334,12 @@ function removePiece(piece_array, piece) {
 function moveObstructed(board, location, move) {
     let x_offset = location[0] + move[0];
     let y_offset = location[1] + move[1];
+    1 ? console.log("1") : console.log("2");
 
-    for (let x = 0; x <)
+    // X position loop
+    for (let x = 0; x_offset > 0 ? (x < Math.abs(x_offset)) : (x >= Math.abs(x_offset)); x_offset > 0 ? x++ : x--) {
+
+    }
 }
 
 // Return a list of valid vec2 moves relative to a piece's location.
