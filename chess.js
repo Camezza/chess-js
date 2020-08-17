@@ -75,7 +75,7 @@ function generateBoard() {
             object.square = horizontal_order[x] + vertical_order[y];
             object.location = [x, y];
             object.occupation = null;
-            object.checked = false;
+            object.checked = [false, false]; // White, black.
             board[y].push(object);
         }
     }
@@ -213,7 +213,7 @@ function displayBoard(board, colour, move_sequence) {
     // Every row
     function whitePerspective() {
         bigrow.unshift("   "); // Left spacer for grid letters
-        display_board.unshift(bigrow);
+        display_board.unshift(bigrow); // Add the new row to the beginning
         for (let row_number = display_board.length - 1, maximum_rows = 0; row_number >= maximum_rows; row_number--) {
             let display_row = display_board[row_number];
 
@@ -228,7 +228,7 @@ function displayBoard(board, colour, move_sequence) {
 
     function blackPerspective() {
         bigrow.push(" "); // Right spacer for grid letters
-        display_board.unshift(bigrow);
+        display_board.unshift(bigrow); // Add the new row to the beginning
         for (let row_number = 0, maximum_rows = display_board.length; row_number < maximum_rows; row_number++) {
             let display_row = display_board[row_number];
 
@@ -366,7 +366,8 @@ function getValidMoves(board, piece) {
             let square = getSquare(board, move_location);
 
             // King can't move to spaces that would put it in check.
-            if (piece.type.id === "king" && square.checked) {
+            if (piece.type.id === "king" && square.checked[isWhite(piece.colour) + 0]) {
+                console.log(square.checked[piece.colour]);
                 valid = false;
             }
 
