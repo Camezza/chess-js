@@ -191,11 +191,11 @@ function displayBoard(board, colour, move_sequence) {
         display_board.push(display_row);
     }
 
-        // Display square letters above/below the board
-        let bigrow = [];
-        for (let i = 0, il = board.length; i < il; i++) {
-            bigrow.push(`${"\x1b[31m"}${horizontal_order[i]}${"\x1b[0m"}   `);
-        }
+    // Display square letters above/below the board
+    let bigrow = [];
+    for (let i = 0, il = board.length; i < il; i++) {
+        bigrow.push(`${"\x1b[31m"}${horizontal_order[i]}${"\x1b[0m"}   `);
+    }
 
     /*
     // For black perspective: Row loop ascending (++), square loop descending (--).
@@ -331,11 +331,18 @@ function removePiece(piece_array, piece) {
     return updated_piece_array;
 }
 
+function moveObstructed(board, location, move) {
+    let x_offset = location[0] + move[0];
+    let y_offset = location[1] + move[1];
+
+    for (let x = 0; x <)
+}
+
 // Return a list of valid vec2 moves relative to a piece's location.
 // ToDo: 
 // - Infinite pieces integration
 // - Castling
-// - Check
+// - Knight only piece hopping
 function getValidMoves(board, piece) {
     let moves = piece.type.moves;
     let valid_moves = [];
@@ -366,7 +373,7 @@ function getValidMoves(board, piece) {
             let square = getSquare(board, move_location);
 
             // King can't move to spaces that would put it in check.
-            if (piece.type.id === "king" && square.checked[isWhite(piece.colour) + 0]) {
+            if (piece.type.id === "king" && square.checked[!isWhite(piece.colour) + 0]) {
                 console.log(square.checked[piece.colour]);
                 valid = false;
             }
@@ -444,14 +451,19 @@ function getPieceByLocation(piece_array, vec2) {
     return null;
 }
 
-function getValidPieces(board, piece_array) {
+function getValidPieces(board, piece_array, check) {
     let return_piece_array = [];
     for (let i = 0, il = piece_array.length; i < il; i++) {
         let piece = piece_array[i];
         let moves = getValidMoves(board, piece);
 
-        // Possible moves
-        if (moves.length > 0) {
+        // The piece can move & not currently in check
+        if (moves.length > 0 && !check) {
+            return_piece_array.push(piece);
+        }
+
+        // Currently in check and the king can move
+        else if (moves.length > 0 && piece.type.id === "king" && check) {
             return_piece_array.push(piece);
         }
     }
@@ -477,9 +489,54 @@ function displayMoves(board, moves) {
         let move = moves[i];
         let square = getSquare(board, move);
         let prefix = square.occupation === null ? "" : `Take ${square.occupation.type.id} at `;
-        move_display += `[${prefix}${square.square}]${i+1 === il ? "." : ","} `;
+        move_display += `[${prefix}${square.square}]${i + 1 === il ? "." : ","} `;
     }
     return move_display;
+}
+
+// Apply checked squares to board
+function applySquareCheck(board, white, black) {
+
+    // Apply white check squares
+    for (let i = 0, il = white.length; i < il; i++) {
+        let piece = white[i];
+        let moves = getValidMoves(board, piece);
+
+        for (let x = 0, xl = moves.length; x < xl; x++) {
+            let move = moves[x];
+            let square = getSquare(board, move);
+            square.checked[isWhite("white") + 0] = true; // Set the square to check.
+        }
+    }
+
+    // Apply black check squares
+    for (let i = 0, il = black.length; i < il; i++) {
+        let piece = black[i];
+        let moves = getValidMoves(board, piece);
+
+        for (let x = 0, xl = moves.length; x < xl; x++) {
+            let move = moves[x];
+            let square = getSquare(board, move);
+            square.checked[isWhite("black") + 0] = true; // Set the square to check.
+        }
+    }
+}
+
+function inCheck(board, piece_array) {
+    for (let i = 0, il = piece_array.length; i < il; i++) {
+        let piece = piece_array[i];
+
+        // King
+        if (piece.type.id === "king") {
+            let square = getSquare(board, piece.location);
+
+            // Square checked by the opposing colour
+            if (square.checked[!isWhite(piece.colour) + 0]) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 function startGame(game) {
@@ -503,25 +560,32 @@ function startGame(game) {
             default:
                 throw ("No colour defined.");
         }
-        piece_array = getValidPieces(board, piece_array);
+        piece_array = getValidPieces(board, piece_array, inCheck(board, piece_array));
         piece_display = displayPieces(board, piece_array);
         console.log(displayBoard(board, colour));
-        console.log(`Select a piece by typing its square. (Example: A2)\nMoveable pieces: ${piece_display}`);
 
-        // Prompt again if invalid selection given
-        while (return_piece === null) {
-            let selection = cbprompt("> ", getLocationBySquare);
+        if (piece_array.length > 0) {
+            console.log(`Select a piece by typing its square. (Example: A2)\nMoveable pieces: ${piece_display}`);
 
-            // Valid selection given
-            if (selection !== null) {
-                let piece = getPieceByLocation(piece_array, selection);
+            // Prompt again if invalid selection given
+            while (return_piece === null) {
+                let selection = cbprompt("> ", getLocationBySquare);
 
-                // Match found
-                if (piece !== null) {
-                    return_piece = piece;
-                    break;
-                } else console.log("\nInvalid piece selected.\n"); // Invalid piece (null)
-            } else console.log("\nInvalid square selected.\n"); // Invalid square (null)
+                // Valid selection given
+                if (selection !== null) {
+                    let piece = getPieceByLocation(piece_array, selection);
+
+                    // Match found
+                    if (piece !== null) {
+                        return_piece = piece;
+                        break;
+                    } else console.log("\nInvalid piece selected.\n"); // Invalid piece (null)
+                } else console.log("\nInvalid square selected.\n"); // Invalid square (null)
+            }
+        }
+
+        else {
+            console.log(`No available moves. ${isWhite(colour) ? "black" : "white"} wins.`);
         }
         return return_piece;
     }
@@ -570,7 +634,7 @@ function startGame(game) {
                 white = removePiece(white, move_square.occupation);
             }
 
-            else throw("Strange error occured..."); // This error is very hard to get
+            else throw ("Strange error occured..."); // This error is very hard to get
         }
 
         // It is no longer the first move
@@ -586,11 +650,20 @@ function startGame(game) {
     while (game.active) {
         colour = game.turn ? "white" : "black";
         let piece = choosePiece(colour); // Prompt the user to enter a piece.
-        let move = chooseMove(piece); // Prompt the user to choose a move.
-        movePiece(piece, move); // Update the piece's new position.
-        updateBoard(board, white); // Update white pieces
-        updateBoard(board, black); // Update black pieces
-        game.turn = !game.turn; // Change turns.
+
+        // Player can still move.
+        if (piece !== null) {
+            let move = chooseMove(piece); // Prompt the user to choose a move.
+            board = generateBoard();
+            movePiece(piece, move); // Update the piece's new position.
+            updateBoard(board, white); // Update white pieces
+            updateBoard(board, black); // Update black pieces
+            applySquareCheck(board, white, black);
+            game.turn = !game.turn; // Change turns.
+        }
+
+        // No remaining moves, end the game.
+        else game.active = false;
     }
 }
 
