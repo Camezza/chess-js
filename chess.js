@@ -332,10 +332,15 @@ function removePiece(piece_array, piece) {
 }
 
 function moveObstructed(board, piece, move) {
+
+    // Knights can jump over pieces, and therefore cannot be obstructed
     if (piece.type.id !== "knight") {
         let location = piece.location;
         let x_offset = location[0] + move[0];
         let y_offset = location[1] + move[1];
+
+        // This won't work for diagonal pieces
+        // ToDo: fix this
 
         // X position loop
         for (let x = 0; x_offset > 0 ? (x < x_offset + 1) : (x >= x_offset); x_offset > 0 ? x++ : x--) {
