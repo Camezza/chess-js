@@ -331,24 +331,26 @@ function removePiece(piece_array, piece) {
     return updated_piece_array;
 }
 
-function moveObstructed(board, location, move) {
-    let x_offset = location[0] + move[0];
-    let y_offset = location[1] + move[1];
+function moveObstructed(board, piece, move) {
+    if (piece.type.id !== "knight") {
+        let location = piece.location;
+        let x_offset = location[0] + move[0];
+        let y_offset = location[1] + move[1];
 
-    // X position loop
-    for (let x = 0; x_offset > 0 ? (x < x_offset + 1) : (x >= x_offset); x_offset > 0 ? x++ : x--) {
+        // X position loop
+        for (let x = 0; x_offset > 0 ? (x < x_offset + 1) : (x >= x_offset); x_offset > 0 ? x++ : x--) {
 
-        // Y position loop
-        for (let y = 0; y_offset > 0 ? (y < y_offset + 1) : (y >= y_offset); y_offset > 0 ? y++ : y--) {
-            let destination = [x, y];
-            let square = getSquare(board, destination);
-            
-            // Square occupied, move is obstructed
-            if (square.occupation !== null) {
-                return true;
+            // Y position loop
+            for (let y = 0; y_offset > 0 ? (y < y_offset + 1) : (y >= y_offset); y_offset > 0 ? y++ : y--) {
+                let destination = [x, y];
+                let square = getSquare(board, destination);
+
+                // Square occupied, move is obstructed
+                if (square.occupation !== null) {
+                    return true;
+                }
             }
         }
-
     }
     return false;
 }
