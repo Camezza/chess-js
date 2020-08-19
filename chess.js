@@ -496,7 +496,11 @@ function getAbsoluteMoves(board, location, moves) {
     for (let i = 0, il = moves.length; i < il; i++) {
         let move = moves[i];
         let absolute_move = addVector(board, location, move);
-        absolute_moves.push(absolute_move);
+
+        // Move is on the board.
+        if (absolute_move !== null) {
+            absolute_moves.push(absolute_move);
+        }
     }
     console.log(absolute_moves);
     return absolute_moves;
@@ -608,7 +612,7 @@ function applySquareCheck(board, white, black) {
             let move = moves[x];
             let square = getSquare(board, move);
             square.checked[isWhite("white") + 0] = true; // Set the square to check.
-            console.log(`Attacking piece: ${piece.type.id}, Destination: ${square.occupation}, Square: [${square.square}], White check: [${square.checked[isWhite("white") + 0]}]`);
+            console.log(`Attacking piece: ${piece.colour} ${piece.type.id}, Destination: ${square.occupation === null ? "Empty" : `${square.occupation.colour} ${square.occupation.type.id}`}, Square: [${square.square}], White check: [${square.checked[isWhite("white") + 0]}]`);
         }
     }
 
