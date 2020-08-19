@@ -332,30 +332,75 @@ function removePiece(piece_array, piece) {
 }
 
 function moveObstructed(board, piece, move) {
+    let movePath = [];
 
-    // Knights can jump over pieces, and therefore cannot be obstructed
+    // Knights can jump over pieces and cannot be obstructed
     if (piece.type.id !== "knight") {
-        let location = piece.location;
-        let x_offset = location[0] + move[0];
-        let y_offset = location[1] + move[1];
+        let x_offset = piece.location[0] + move[0];
+        let y_offset = piece.location[1] + move[1];
 
-        // This won't work for diagonal pieces
-        // ToDo: fix this
+        x_offset = x_offset === 0 ? 0 : (x_offset > 0 ? x_offset - 1 : x_offset + 1);
+        y_offset = y_offset === 0 ? 0 : (y_offset > 0 ? y_offset - 1 : y_offset + 1);
 
-        // X position loop
-        for (let x = 0; x_offset > 0 ? (x < x_offset + 1) : (x >= x_offset); x_offset > 0 ? x++ : x--) {
+        // Diagonal
+        if (Math.abs(x_offset) === Math.abs(y_offset)) {
 
-            // Y position loop
-            for (let y = 0; y_offset > 0 ? (y < y_offset + 1) : (y >= y_offset); y_offset > 0 ? y++ : y--) {
-                let destination = [x, y];
-                let square = getSquare(board, destination);
+            // X and Y loop both increase by 1/-1
+            for (let x = 0, y = 0; (x_offset > 0 ? (x < x_offset) : (x > x_offset) && y_offset > 0 ? (y < y_offset) : (y > y_offset));) {
 
-                // Square occupied, move is obstructed
+                // Prevents starting from 0, 0 
+                let x_counter_offset = x_offset > 0 ? 1 : -1;
+                let y_counter_offset = y_offset > 0 ? 1 : -1;
+                let location = addVector(board, piece.location, [x + x_counter_offset, y + y_counter_offset]);
+                movePath.push(location);
+
+                // Increment / Decrement
+                x_offset > 0 ? x++ : x--;
+                y_offset > 0 ? y++ : y--;
+            }
+        }
+
+        // Longitudinal
+        else if (x_offset === 0 || y_offset === 0) {
+            let path_move;
+
+            // Y movement
+            if (x_offset === 0) {
+                y_offset = y_offset > 0 ? (y_offset - 1) : (y_offset + 1);
+                for (let y = 0; y_offset > 0 ? (y < y_offset) : (y > y_offset); y_offset > 0 ? y++ : y--) {
+                    let y_index_offset = y_offset > 0 ? 1 : -1;
+                    path_move = [0, y + y_index_offset];
+                }
+            }
+
+            // X movement
+            else if (y_offset === 0) {
+                x_offset = x_offset > 0 ? (x_offset - 1) : (x_offset + 1);
+                for (let x = 0; x_offset > 0 ? (x < x_offset) : (x > x_offset); x_offset > 0 ? x++ : x--) {
+                    let x_index_offset = x_offset > 0 ? 1 : -1;
+                    path_move = [x + x_index_offset, 0];
+                }
+            }
+            movePath.push(path_move);
+        }
+
+        // Test for all squares between the piece and its destination
+
+        // Spaces to check
+        if (movePath.length > 0) {
+            for (let i = 0, il = movePath.length; i < il; i++) {
+                let absolute_move = addVector(board, piece.location, movePath[i]);
+                let square = getSquare(board, absolute_move);
+
+                // Piece exists
                 if (square.occupation !== null) {
                     return true;
                 }
             }
         }
+
+        // No spaces to check
+        else if (movePath.length === 0) return true;
     }
     return false;
 }
@@ -432,6 +477,11 @@ function getValidMoves(board, piece) {
 
                     // Pawns cannot move diagonal without a piece to take
                     if (piece.type.takemoves.includes(moves[i])) {
+                        valid = false;
+                    }
+
+                    // A piece is between the piece's location and destination
+                    if (moveObstructed(board, piece, moves[i])) {
                         valid = false;
                     }
                 }
