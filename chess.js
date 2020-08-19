@@ -498,6 +498,7 @@ function getAbsoluteMoves(board, location, moves) {
         let absolute_move = addVector(board, location, move);
         absolute_moves.push(absolute_move);
     }
+    console.log(absolute_moves);
     return absolute_moves;
 }
 
@@ -506,19 +507,19 @@ function getTakeMoves(piece) {
     let moves = [];
 
     // No piece-specific take moves, e.g. pawn can only take diagonal
-    if (piece.takemoves.length === 0) {
-        for (let i = 0, il = piece.moves.length; i < il; i++) {
-            moves.push(piece.moves[i]);
+    if (piece.type.takemoves.length === 0) {
+        for (let i = 0, il = piece.type.moves.length; i < il; i++) {
+            moves.push(piece.type.moves[i]);
         }
     }
 
     // Pawn unique take moves
-    else if (piece.type.id === "pawn") {
-        for (let x = 0, xl = piece.takemoves.length; x < xl; x++) {
-            moves.push(piece.takemoves[x]);
+    else if (piece.type.takemoves.length > 0) {
+        for (let x = 0, xl = piece.type.takemoves.length; x < xl; x++) {
+            moves.push(piece.type.takemoves[x]);
         }
     }
-    return 
+    return moves;
 };
 
 function generateGame(id, board, white, black, turn) {
