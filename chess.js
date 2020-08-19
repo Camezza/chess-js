@@ -603,8 +603,6 @@ function applySquareCheck(board, white, black) {
     // Apply white check squares
     for (let i = 0, il = white.length; i < il; i++) {
         let piece = white[i];
-
-        // ToDo: FIX THIS DOESN'T WORK, only returns moves that piece can currently move to instead of possible moves.
         let take_moves = getTakeMoves(piece);
         let moves = getAbsoluteMoves(board, piece.location, take_moves);
 
@@ -612,23 +610,25 @@ function applySquareCheck(board, white, black) {
             let move = moves[x];
             let square = getSquare(board, move);
             square.checked[isWhite("white") + 0] = true; // Set the square to check.
-            console.log(`Attacking piece: ${piece.colour} ${piece.type.id}, Destination: ${square.occupation === null ? "Empty" : `${square.occupation.colour} ${square.occupation.type.id}`}, Square: [${square.square}], White check: [${square.checked[isWhite("white") + 0]}]`);
         }
     }
 
     // Apply black check squares
     for (let i = 0, il = black.length; i < il; i++) {
         let piece = black[i];
-        let moves = getValidMoves(board, piece);
+        let take_moves = getTakeMoves(piece);
+        let moves = getAbsoluteMoves(board, piece.location, take_moves);
 
         for (let x = 0, xl = moves.length; x < xl; x++) {
             let move = moves[x];
             let square = getSquare(board, move);
             square.checked[isWhite("black") + 0] = true; // Set the square to check.
+            console.log(`Attacking piece: ${piece.colour} ${piece.type.id}, Destination: ${square.occupation === null ? "Empty" : `${square.occupation.colour} ${square.occupation.type.id}`}, Square: [${square.square}], Black check: [${square.checked[isWhite("black") + 0]}]`);
         }
     }
 }
 
+// ToDo: Implement piece blocking
 function inCheck(board, piece_array) {
     for (let i = 0, il = piece_array.length; i < il; i++) {
         let piece = piece_array[i];
