@@ -336,23 +336,20 @@ function moveObstructed(board, piece, move) {
 
     // Knights can jump over pieces and cannot be obstructed
     if (piece.type.id !== "knight") {
-        let x_offset = piece.location[0] + move[0];
-        let y_offset = piece.location[1] + move[1];
-
-        x_offset = x_offset === 0 ? 0 : (x_offset > 0 ? x_offset - 1 : x_offset + 1);
-        y_offset = y_offset === 0 ? 0 : (y_offset > 0 ? y_offset - 1 : y_offset + 1);
+        let x_offset = move[0];
+        let y_offset = move[1];
 
         // Diagonal
         if (Math.abs(x_offset) === Math.abs(y_offset)) {
 
-            // X and Y loop both increase by 1/-1
-            for (let x = 0, y = 0; (x_offset > 0 ? (x < x_offset) : (x > x_offset) && y_offset > 0 ? (y < y_offset) : (y > y_offset));) {
+            x_offset = x_offset > 0 ? x_offset - 1 : x_offset + 1;
+            y_offset = y_offset > 0 ? y_offset - 1 : y_offset + 1;
 
-                // Prevents starting from 0, 0 
-                let x_counter_offset = x_offset > 0 ? 1 : -1;
-                let y_counter_offset = y_offset > 0 ? 1 : -1;
-                let location = addVector(board, piece.location, [x + x_counter_offset, y + y_counter_offset]);
-                movePath.push(location);
+            for (let x = 0, y = 0; (x_offset > 0 ? (x < x_offset) : (x > x_offset)) || (y_offset > 0 ? (y < y_offset) : (y > y_offset));) {
+                let x_index_offset = x_offset > 0 ? 1 : -1;
+                let y_index_offset = y_offset > 0 ? 1 : -1;
+                let path_move = [x + x_index_offset, y + y_index_offset];
+                movePath.push(path_move);
 
                 // Increment / Decrement
                 x_offset > 0 ? x++ : x--;
@@ -362,14 +359,14 @@ function moveObstructed(board, piece, move) {
 
         // Longitudinal
         else if (x_offset === 0 || y_offset === 0) {
-            let path_move;
 
             // Y movement
             if (x_offset === 0) {
                 y_offset = y_offset > 0 ? (y_offset - 1) : (y_offset + 1);
                 for (let y = 0; y_offset > 0 ? (y < y_offset) : (y > y_offset); y_offset > 0 ? y++ : y--) {
                     let y_index_offset = y_offset > 0 ? 1 : -1;
-                    path_move = [0, y + y_index_offset];
+                    let path_move = [0, y + y_index_offset];
+                    movePath.push(path_move);
                 }
             }
 
@@ -378,10 +375,10 @@ function moveObstructed(board, piece, move) {
                 x_offset = x_offset > 0 ? (x_offset - 1) : (x_offset + 1);
                 for (let x = 0; x_offset > 0 ? (x < x_offset) : (x > x_offset); x_offset > 0 ? x++ : x--) {
                     let x_index_offset = x_offset > 0 ? 1 : -1;
-                    path_move = [x + x_index_offset, 0];
+                    let path_move = [x + x_index_offset, 0];
+                    movePath.push(path_move);
                 }
             }
-            movePath.push(path_move);
         }
 
         // Test for all squares between the piece and its destination
@@ -398,9 +395,6 @@ function moveObstructed(board, piece, move) {
                 }
             }
         }
-
-        // No spaces to check
-        else if (movePath.length === 0) return true;
     }
     return false;
 }
@@ -409,7 +403,7 @@ function moveObstructed(board, piece, move) {
 // ToDo: 
 // - Infinite pieces integration
 // - Castling
-// - Knight only piece hopping
+// - Check
 function getValidMoves(board, piece) {
     let moves = piece.type.moves;
     let valid_moves = [];
@@ -441,7 +435,6 @@ function getValidMoves(board, piece) {
 
             // King can't move to spaces that would put it in check.
             if (piece.type.id === "king" && square.checked[!isWhite(piece.colour) + 0]) {
-                console.log(square.checked[piece.colour]);
                 valid = false;
             }
 
@@ -496,6 +489,38 @@ function getValidMoves(board, piece) {
     return valid_moves;
 }
 
+// Gets all possible moves of a piece regardless of if it can move there or not.
+function getAbsoluteMoves(board, location, moves) {
+    let absolute_moves = [];
+
+    for (let i = 0, il = moves.length; i < il; i++) {
+        let move = moves[i];
+        let absolute_move = addVector(board, location, move);
+        absolute_moves.push(absolute_move);
+    }
+    return absolute_moves;
+}
+
+// Get relative moves that a piece can use to take.
+function getTakeMoves(piece) {
+    let moves = [];
+
+    // No piece-specific take moves, e.g. pawn can only take diagonal
+    if (piece.takemoves.length === 0) {
+        for (let i = 0, il = piece.moves.length; i < il; i++) {
+            moves.push(piece.moves[i]);
+        }
+    }
+
+    // Pawn unique take moves
+    else if (piece.type.id === "pawn") {
+        for (let x = 0, xl = piece.takemoves.length; x < xl; x++) {
+            moves.push(piece.takemoves[x]);
+        }
+    }
+    return 
+};
+
 function generateGame(id, board, white, black, turn) {
     this.id = id;
     this.board = board;
@@ -525,6 +550,7 @@ function getPieceByLocation(piece_array, vec2) {
 
 function getValidPieces(board, piece_array, check) {
     let return_piece_array = [];
+
     for (let i = 0, il = piece_array.length; i < il; i++) {
         let piece = piece_array[i];
         let moves = getValidMoves(board, piece);
@@ -535,7 +561,7 @@ function getValidPieces(board, piece_array, check) {
         }
 
         // Currently in check and the king can move
-        else if (moves.length > 0 && piece.type.id === "king" && check) {
+        else if (moves.length > 0 && check && piece.type.id === "king") {
             return_piece_array.push(piece);
         }
     }
@@ -572,12 +598,16 @@ function applySquareCheck(board, white, black) {
     // Apply white check squares
     for (let i = 0, il = white.length; i < il; i++) {
         let piece = white[i];
-        let moves = getValidMoves(board, piece);
+
+        // ToDo: FIX THIS DOESN'T WORK, only returns moves that piece can currently move to instead of possible moves.
+        let take_moves = getTakeMoves(piece);
+        let moves = getAbsoluteMoves(board, piece.location, take_moves);
 
         for (let x = 0, xl = moves.length; x < xl; x++) {
             let move = moves[x];
             let square = getSquare(board, move);
             square.checked[isWhite("white") + 0] = true; // Set the square to check.
+            console.log(`Attacking piece: ${piece.type.id}, Destination: ${square.occupation}, Square: [${square.square}], White check: [${square.checked[isWhite("white") + 0]}]`);
         }
     }
 
@@ -637,7 +667,7 @@ function startGame(game) {
         console.log(displayBoard(board, colour));
 
         if (piece_array.length > 0) {
-            console.log(`Select a piece by typing its square. (Example: A2)\nMoveable pieces: ${piece_display}`);
+            console.log(`Currently, ${inCheck(board, piece_array) ? "you are" : "you are not"} in check.\nSelect a piece by typing its square. (Example: A2)\nMoveable pieces: ${piece_display}`);
 
             // Prompt again if invalid selection given
             while (return_piece === null) {
@@ -727,7 +757,7 @@ function startGame(game) {
         if (piece !== null) {
             let move = chooseMove(piece); // Prompt the user to choose a move.
             board = generateBoard();
-            movePiece(piece, move); // Update the piece's new position.
+            movePiece(piece, move); // Update the piece's new position. (CURRENTLY BROKEN, PIECES CAN MOVE ANYWHERE)
             updateBoard(board, white); // Update white pieces
             updateBoard(board, black); // Update black pieces
             applySquareCheck(board, white, black);
