@@ -1,4 +1,4 @@
-let x_value = 0, y_value = 1;
+let x_value = 0, y_value = 2;
 let x2_value = 0, y2_value = 2;
 
 let x_offset = x2_value - x_value
