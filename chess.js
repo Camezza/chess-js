@@ -629,6 +629,10 @@ function applySquareCheck(board, white, black) {
 }
 
 // ToDo: Implement piece blocking
+// 1. Get all possible moves of all defending pieces.
+// 2. Create new boards & apply check with the updated move positions.
+// 3. Get a list of moves where the king will no longer be in check.
+// Keep this function intact, it only needs to check if the king is currently in check.
 function inCheck(board, piece_array) {
     for (let i = 0, il = piece_array.length; i < il; i++) {
         let piece = piece_array[i];
