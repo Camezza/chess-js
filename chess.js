@@ -628,6 +628,35 @@ function applySquareCheck(board, white, black) {
     }
 }
 
+// 1. Get all possible moves of all defending pieces.
+// 2. Create new boards & apply check with the updated move positions.
+// 3. Get a list of moves where the king will no longer be in check.
+function canDefendCheck(board, colour, white, black) {
+
+    // Apply check for white
+    if (isWhite(colour)) {
+
+        // Test all pieces
+        for (let i = 0, il = white.length; i < il; i++) {
+            let piece = white[i];
+            let valid_moves = getValidMoves(board, piece);
+
+            // Test all valid moves
+            for (let x = 0, xl = valid_moves.length; x < xl; x++) {
+                let valid_move = valid_moves[x];
+                // Create new board and apply checks
+            }
+            
+        }
+    }
+
+    else if (!isWhite(colour)) {
+
+    }
+
+    else throw(`Invalid colour specified '${colour}'.`);
+}
+
 // ToDo: Implement piece blocking
 // 1. Get all possible moves of all defending pieces.
 // 2. Create new boards & apply check with the updated move positions.
