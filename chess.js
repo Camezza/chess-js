@@ -745,15 +745,9 @@ function startGame(game) {
             // Valid selection given
             if (selection !== null) {
                 return_move = selection;
-                /*
-                let square = getSquare(board, selection);
-
-                if (square.occupation !== null) {
-                    removePiece(black, square.occupation);
-                }
-                */
-
-            } else console.log("Invalid square selected.");
+            } 
+            
+            else console.log("Invalid square selected.");
 
         }
         return return_move;
