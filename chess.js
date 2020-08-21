@@ -636,15 +636,32 @@ function canDefendCheck(board, colour, white, black) {
     // Apply check for white
     if (isWhite(colour)) {
 
+        // Create new instance of white
+        let piece_array = isWhite(colour) ? white.create() : black.create();
+        let opposing_piece_array = isWhite(colour) ? black.create() : white.create();
+
         // Test all pieces
-        for (let i = 0, il = white.length; i < il; i++) {
-            let piece = white[i];
+        for (let i = 0, il = piece_array.length; i < il; i++) {
+            let piece = piece_array[i];
             let valid_moves = getValidMoves(board, piece);
 
             // Test all valid moves
             for (let x = 0, xl = valid_moves.length; x < xl; x++) {
                 let valid_move = valid_moves[x];
-                // Create new board and apply checks
+                let board_temp = generateBoard();
+                piece.location = valid_move;
+
+                updateBoard(board_temp, piece_array);
+                updateBoard(board_temp, opposing_piece_array);
+                applySquareCheck(board_temp, piece_array, opposing_piece_array); // Implement this into updateBoard
+                
+                if (inCheck(board_temp, piece_array)) {
+                    // This move won't work.
+                }
+
+                else {
+                    // Move can successfully defend check, return the piece & its valid moves.
+                }
             }
             
         }
