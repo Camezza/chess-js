@@ -298,6 +298,7 @@ function updateBoard(board, piece_array) {
         row[x] = square; // Update the square
         board[y] = row; // Update the row
     }
+    applySquareCheck(board, piece_array);
     return board;
 }
 
@@ -502,7 +503,6 @@ function getAbsoluteMoves(board, location, moves) {
             absolute_moves.push(absolute_move);
         }
     }
-    console.log(absolute_moves);
     return absolute_moves;
 }
 
@@ -598,32 +598,18 @@ function displayMoves(board, moves) {
 }
 
 // Apply checked squares to board
-function applySquareCheck(board, white, black) {
+function applySquareCheck(board, piece_array) {
 
-    // Apply white check squares
-    for (let i = 0, il = white.length; i < il; i++) {
-        let piece = white[i];
+    // Apply check squares
+    for (let i = 0, il = piece_array.length; i < il; i++) {
+        let piece = piece_array[i];
         let take_moves = getTakeMoves(piece);
         let moves = getAbsoluteMoves(board, piece.location, take_moves);
 
         for (let x = 0, xl = moves.length; x < xl; x++) {
             let move = moves[x];
             let square = getSquare(board, move);
-            square.checked[isWhite("white") + 0] = true; // Set the square to check.
-        }
-    }
-
-    // Apply black check squares
-    for (let i = 0, il = black.length; i < il; i++) {
-        let piece = black[i];
-        let take_moves = getTakeMoves(piece);
-        let moves = getAbsoluteMoves(board, piece.location, take_moves);
-
-        for (let x = 0, xl = moves.length; x < xl; x++) {
-            let move = moves[x];
-            let square = getSquare(board, move);
-            square.checked[isWhite("black") + 0] = true; // Set the square to check.
-            console.log(`Attacking piece: ${piece.colour} ${piece.type.id}, Destination: ${square.occupation === null ? "Empty" : `${square.occupation.colour} ${square.occupation.type.id}`}, Square: [${square.square}], Black check: [${square.checked[isWhite("black") + 0]}]`);
+            square.checked[isWhite(piece.colour) + 0] = true; // Set the square to check.
         }
     }
 }
@@ -653,7 +639,6 @@ function canDefendCheck(board, colour, white, black) {
 
                 updateBoard(board_temp, piece_array);
                 updateBoard(board_temp, opposing_piece_array);
-                applySquareCheck(board_temp, piece_array, opposing_piece_array); // Implement this into updateBoard
                 
                 if (inCheck(board_temp, piece_array)) {
                     // This move won't work.
@@ -815,7 +800,6 @@ function startGame(game) {
             movePiece(piece, move); // Update the piece's new position. (CURRENTLY BROKEN, PIECES CAN MOVE ANYWHERE)
             updateBoard(board, white); // Update white pieces
             updateBoard(board, black); // Update black pieces
-            applySquareCheck(board, white, black);
             game.turn = !game.turn; // Change turns.
         }
 
@@ -830,6 +814,5 @@ var black = generateFormation('black');
 board = updateBoard(board, white);
 board = updateBoard(board, black);
 let game = new generateGame("main", board, white, black, true);
-let lucky_piece = white[9];
 startGame(game);
 
