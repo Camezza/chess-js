@@ -553,20 +553,32 @@ function getPieceByLocation(piece_array, vec2) {
     return null;
 }
 
-function getValidPieces(board, piece_array, check) {
+// Gets the valid pieces that a player can use to move during a turn.
+function getValidPieces(board, colour, white, black, check) {
+    let piece_array = isWhite(colour) ? white : black;
     let return_piece_array = [];
 
-    for (let i = 0, il = piece_array.length; i < il; i++) {
-        let piece = piece_array[i];
-        let moves = getValidMoves(board, piece);
+    // Not in check, get all pieces that can move
+    if (!check) {
 
-        // The piece can move & not currently in check
-        if (moves.length > 0 && !check) {
-            return_piece_array.push(piece);
+        for (let i = 0, il = piece_array.length; i < il; i++) {
+            let piece = piece_array[i];
+            let moves = getValidMoves(board, piece);
+
+            // The piece can move
+            if (moves.length > 0) {
+                return_piece_array.push(piece);
+            }
         }
+    }
 
-        // Currently in check and the king can move
-        else if (moves.length > 0 && check && piece.type.id === "king") {
+    // Currently in check, only return pieces that can defend
+    else if (check) {
+        let combos = canDefendCheck(board, colour, white, black);
+
+        // Add each piece
+        for (let x = 0, xl = combos.length; x < xl; x++) {
+            let piece = combos[x].piece;
             return_piece_array.push(piece);
         }
     }
@@ -619,44 +631,51 @@ function applySquareCheck(board, piece_array) {
 // 3. Get a list of moves where the king will no longer be in check.
 function canDefendCheck(board, colour, white, black) {
 
-    // Apply check for white
-    if (isWhite(colour)) {
+    let valid_combinations = [];
 
-        // Create new instance of white
-        let piece_array = isWhite(colour) ? white.create() : black.create();
-        let opposing_piece_array = isWhite(colour) ? black.create() : white.create();
+    // Create new instance of white
+    let piece_array = isWhite(colour) ? Array.from(white) : Array.from(black);
+    let opposing_piece_array = isWhite(colour) ? Array.from(black) : Array.from(white);
 
-        // Test all pieces
-        for (let i = 0, il = piece_array.length; i < il; i++) {
-            let piece = piece_array[i];
-            let valid_moves = getValidMoves(board, piece);
+    console.log(piece_array);
 
-            // Test all valid moves
-            for (let x = 0, xl = valid_moves.length; x < xl; x++) {
-                let valid_move = valid_moves[x];
-                let board_temp = generateBoard();
-                piece.location = valid_move;
+    // Test all pieces
+    for (let i = 0, il = piece_array.length; i < il; i++) {
+        let piece = piece_array[i];
+        let valid_moves = getValidMoves(board, piece);
+        let defending_moves = [];
 
-                updateBoard(board_temp, piece_array);
-                updateBoard(board_temp, opposing_piece_array);
-                
-                if (inCheck(board_temp, piece_array)) {
-                    // This move won't work.
-                }
+        // Test all valid moves
+        for (let x = 0, xl = valid_moves.length; x < xl; x++) {
+            let valid_move = valid_moves[x];
+            let board_temp = generateBoard();
+            let destination_square = getSquare(board_temp, valid_move);
 
-                else {
-                    // Move can successfully defend check, return the piece & its valid moves.
-                }
+            // Square occupied, take the piece. Don't need to check for colour as getValidMoves already filters it.
+            if (destination_square.occupation !== null) {
+                removePiece(opposing_piece_array, destination_square.occupation);
             }
+            piece.location = valid_move; // THIS WON'T WORK! NEED TO REGISTER TAKING A PIECE.
             
+
+            board_temp = updateBoard(board_temp, piece_array);
+            board_temp = updateBoard(board_temp, opposing_piece_array);
+            console.log(`Valid move: ${valid_move}, Piece location: ${piece.location}`);
+
+            if (!inCheck(board_temp, piece_array)) {
+                defending_moves.push(valid_move);
+            }
+        }
+
+        // Piece can defend check, add combination
+        if (defending_moves.length > 0) {
+            valid_combinations.push({
+                piece: piece,
+                moves: defending_moves,
+            });
         }
     }
-
-    else if (!isWhite(colour)) {
-
-    }
-
-    else throw(`Invalid colour specified '${colour}'.`);
+    return valid_combinations;
 }
 
 // ToDo: Implement piece blocking
@@ -687,25 +706,13 @@ function startGame(game) {
     console.log(`${game.turn ? "white" : "black"} will move first.\n`);
 
     function choosePiece(colour) {
-        let piece_array, piece_display, return_piece = null;
+        let return_piece = null;
+        let piece_array = getValidPieces(board, colour, game.white, game.black, inCheck(board, isWhite(colour) ? game.white : game.black));
+        let piece_display = displayPieces(board, piece_array);
 
-        // Display possible moves for a specific colour
-        switch (colour) {
-            case "white":
-                piece_array = game.white;
-                break;
-
-            case "black":
-                piece_array = game.black;
-                break;
-
-            default:
-                throw ("No colour defined.");
-        }
-        piece_array = getValidPieces(board, piece_array, inCheck(board, piece_array));
-        piece_display = displayPieces(board, piece_array);
         console.log(displayBoard(board, colour));
 
+        // Moves left
         if (piece_array.length > 0) {
             console.log(`Currently, ${inCheck(board, piece_array) ? "you are" : "you are not"} in check.\nSelect a piece by typing its square. (Example: A2)\nMoveable pieces: ${piece_display}`);
 
@@ -745,8 +752,8 @@ function startGame(game) {
             // Valid selection given
             if (selection !== null) {
                 return_move = selection;
-            } 
-            
+            }
+
             else console.log("Invalid square selected.");
 
         }
