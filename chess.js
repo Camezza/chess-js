@@ -574,13 +574,7 @@ function getValidPieces(board, colour, white, black, check) {
 
     // Currently in check, only return pieces that can defend
     else if (check) {
-        let combos = canDefendCheck(board, colour, white, black);
-
-        // Add each piece
-        for (let x = 0, xl = combos.length; x < xl; x++) {
-            let piece = combos[x].piece;
-            return_piece_array.push(piece);
-        }
+        return_piece_array = getDefendingPieces(board, colour, white, black);
     }
     return return_piece_array;
 }
@@ -626,56 +620,60 @@ function applySquareCheck(board, piece_array) {
     }
 }
 
+function getDefendingMoves(board, piece, white, black) {
+    let colour = piece.colour;
+
+    // Create new instance of existing piece arrays
+    let piece_array = isWhite(colour) ? Array.from(white) : Array.from(black);
+    let opposing_piece_array = isWhite(colour) ? Array.from(black) : Array.from(white);
+    let valid_moves = getValidMoves(board, piece);
+    let defending_moves = [];
+
+    // Test all valid moves
+    for (let x = 0, xl = valid_moves.length; x < xl; x++) {
+        let valid_move = valid_moves[x];
+        let board_temp = generateBoard();
+        let destination_square = getSquare(board_temp, valid_move);
+
+        // Square occupied, take the piece. Don't need to check for colour as getValidMoves already filters it.
+        if (destination_square.occupation !== null) { // Need to account for pawn moves
+            opposing_piece_array = removePiece(opposing_piece_array, destination_square.occupation);
+        }
+        piece.location = valid_move; // THIS WON'T WORK! NEED TO REGISTER TAKING A PIECE.
+
+
+        board_temp = updateBoard(board_temp, piece_array);
+        board_temp = updateBoard(board_temp, opposing_piece_array);
+        console.log(`Valid move: ${valid_move}, Piece location: ${piece.location}`);
+
+        if (!inCheck(board_temp, piece_array)) {
+            defending_moves.push(valid_move);
+        }
+    }
+    return defending_moves;
+}
+
+
 // 1. Get all possible moves of all defending pieces.
 // 2. Create new boards & apply check with the updated move positions.
 // 3. Get a list of moves where the king will no longer be in check.
-function canDefendCheck(board, colour, white, black) {
-
-    let valid_combinations = [];
+function getDefendingPieces(board, colour, white, black) {
+    let return_piece_array = [];
 
     // Create new instance of white
     let piece_array = isWhite(colour) ? Array.from(white) : Array.from(black);
-    let opposing_piece_array = isWhite(colour) ? Array.from(black) : Array.from(white);
-
-    console.log(piece_array);
 
     // Test all pieces
     for (let i = 0, il = piece_array.length; i < il; i++) {
         let piece = piece_array[i];
-        let valid_moves = getValidMoves(board, piece);
-        let defending_moves = [];
-
-        // Test all valid moves
-        for (let x = 0, xl = valid_moves.length; x < xl; x++) {
-            let valid_move = valid_moves[x];
-            let board_temp = generateBoard();
-            let destination_square = getSquare(board_temp, valid_move);
-
-            // Square occupied, take the piece. Don't need to check for colour as getValidMoves already filters it.
-            if (destination_square.occupation !== null) {
-                removePiece(opposing_piece_array, destination_square.occupation);
-            }
-            piece.location = valid_move; // THIS WON'T WORK! NEED TO REGISTER TAKING A PIECE.
-            
-
-            board_temp = updateBoard(board_temp, piece_array);
-            board_temp = updateBoard(board_temp, opposing_piece_array);
-            console.log(`Valid move: ${valid_move}, Piece location: ${piece.location}`);
-
-            if (!inCheck(board_temp, piece_array)) {
-                defending_moves.push(valid_move);
-            }
-        }
+        let defending_moves = getDefendingMoves(board, piece, white, black);
 
         // Piece can defend check, add combination
         if (defending_moves.length > 0) {
-            valid_combinations.push({
-                piece: piece,
-                moves: defending_moves,
-            });
+            return_piece_array.push(piece);
         }
     }
-    return valid_combinations;
+    return return_piece_array;
 }
 
 // ToDo: Implement piece blocking
