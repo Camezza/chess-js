@@ -573,7 +573,7 @@ function getValidPieces(board, colour, white, black, check) {
     }
 
     // Currently in check, only return pieces that can defend
-    else if (check) {
+    else {
         return_piece_array = getDefendingPieces(board, colour, white, black);
     }
     return return_piece_array;
@@ -629,6 +629,8 @@ function getDefendingMoves(board, piece, white, black) {
     let valid_moves = getValidMoves(board, piece);
     let defending_moves = [];
 
+    console.log(`\n${piece.colour} ${piece.type.id}:`);
+
     // Test all valid moves
     for (let x = 0, xl = valid_moves.length; x < xl; x++) {
         let valid_move = valid_moves[x];
@@ -640,11 +642,15 @@ function getDefendingMoves(board, piece, white, black) {
             opposing_piece_array = removePiece(opposing_piece_array, destination_square.occupation);
         }
         piece.location = valid_move; // THIS WON'T WORK! NEED TO REGISTER TAKING A PIECE.
+        // ERROR: 
+        // - Pieces overlap other pieces instead of taking
+        // - Board is not being reset likely due to directly updating piece.location instead of taking an instance.
 
 
         board_temp = updateBoard(board_temp, piece_array);
         board_temp = updateBoard(board_temp, opposing_piece_array);
-        console.log(`Valid move: ${valid_move}, Piece location: ${piece.location}`);
+        console.log(`Valid move: ${valid_move}, Piece location: ${piece.location}. Currently ${inCheck(board_temp, piece_array) ? "in" : "not in"} check.`);
+        console.log(displayBoard(board_temp, piece.colour));
 
         if (!inCheck(board_temp, piece_array)) {
             defending_moves.push(valid_move);
