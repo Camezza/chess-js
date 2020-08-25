@@ -623,9 +623,6 @@ function applySquareCheck(board, piece_array) {
 function getDefendingMoves(board, piece, white, black) {
     let colour = piece.colour;
 
-    // Create new instance of existing piece arrays
-    let piece_array = isWhite(colour) ? Array.from(white) : Array.from(black);
-    let opposing_piece_array = isWhite(colour) ? Array.from(black) : Array.from(white);
     let valid_moves = getValidMoves(board, piece);
     let defending_moves = [];
 
@@ -633,6 +630,11 @@ function getDefendingMoves(board, piece, white, black) {
 
     // Test all valid moves
     for (let x = 0, xl = valid_moves.length; x < xl; x++) {
+
+        // Create new instance of existing piece arrays
+        let piece_array = isWhite(colour) ? Array.from(white) : Array.from(black);
+        let opposing_piece_array = isWhite(colour) ? Array.from(black) : Array.from(white);
+
         let valid_move = valid_moves[x];
         let board_temp = generateBoard();
         let destination_square = getSquare(board_temp, valid_move);
@@ -671,7 +673,8 @@ function getDefendingPieces(board, colour, white, black) {
 
     // Test all pieces
     for (let i = 0, il = piece_array.length; i < il; i++) {
-        let piece = piece_array[i];
+        let reference_array = Array.from(piece_array);
+        let piece = reference_array[i];
         let defending_moves = getDefendingMoves(board, piece, white, black);
 
         // Piece can defend check, add combination
