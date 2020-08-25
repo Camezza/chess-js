@@ -326,6 +326,7 @@ function removePiece(piece_array, piece) {
 
         // Add everything but the removed piece
         if (iterated_piece !== piece) {
+            console.log(`\n${piece.type.id}\n`);
             updated_piece_array.push(piece);
         }
     };
@@ -622,7 +623,7 @@ function applySquareCheck(board, piece_array) {
 
 function getDefendingMoves(board, piece, white, black) {
     let colour = piece.colour;
-
+    let original_location = piece.location;
     let valid_moves = getValidMoves(board, piece);
     let defending_moves = [];
 
@@ -643,12 +644,7 @@ function getDefendingMoves(board, piece, white, black) {
         if (destination_square.occupation !== null) { // Need to account for pawn moves
             opposing_piece_array = removePiece(opposing_piece_array, destination_square.occupation);
         }
-        piece.location = valid_move; // THIS WON'T WORK! NEED TO REGISTER TAKING A PIECE.
-        // ERROR: 
-        // - Pieces overlap other pieces instead of taking
-        // - Board is not being reset likely due to directly updating piece.location instead of taking an instance.
-
-
+        piece.location = valid_move; // Not changing reference in this function but original
         board_temp = updateBoard(board_temp, piece_array);
         board_temp = updateBoard(board_temp, opposing_piece_array);
         console.log(`Valid move: ${valid_move}, Piece location: ${piece.location}. Currently ${inCheck(board_temp, piece_array) ? "in" : "not in"} check.`);
@@ -658,6 +654,7 @@ function getDefendingMoves(board, piece, white, black) {
             defending_moves.push(valid_move);
         }
     }
+    piece.location = original_location;
     return defending_moves;
 }
 
