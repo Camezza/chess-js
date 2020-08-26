@@ -644,13 +644,15 @@ function getDefendingMoves(board, piece, white, black) {
         let destination_square = getSquare(board_temp, valid_move);
 
         // Square occupied, take the piece. Don't need to check for colour as getValidMoves already filters it.
-        if (destination_square.occupation !== null) { // Need to account for pawn moves
+        if (destination_square.occupation !== null) {
             opposing_piece_array = removePiece(opposing_piece_array, destination_square.occupation);
             console.log(`\n${piece.colour} ${piece.type.id}:`);
             console.log(`A ${destination_square.occupation.colour} ${destination_square.occupation.type.id} is occupying the square at ${destination_square.square}.`);
+            console.log(opposing_piece_array);
         }
         piece.location = valid_move;
         board_temp = refreshBoard(generateBoard(), piece_array, opposing_piece_array);
+        console.log(displayBoard(board_temp, piece.colour));
 
         if (!inCheck(board_temp, piece_array)) {
             defending_moves.push(valid_move);
