@@ -326,7 +326,7 @@ function removePiece(piece_array, piece) {
 
         // Add everything but the removed piece
         if (iterated_piece !== piece) {
-            updated_piece_array.push(piece);
+            updated_piece_array.push(iterated_piece);
         }
     };
     return updated_piece_array;
@@ -620,6 +620,7 @@ function applySquareCheck(board, piece_array) {
     }
 }
 
+// Returns a list of moves a piece can make to defend check.
 function getDefendingMoves(board, piece, white, black) {
     let colour = piece.colour;
     let original_location = piece.location;
@@ -646,13 +647,9 @@ function getDefendingMoves(board, piece, white, black) {
         // Square occupied, take the piece. Don't need to check for colour as getValidMoves already filters it.
         if (destination_square.occupation !== null) {
             opposing_piece_array = removePiece(opposing_piece_array, destination_square.occupation);
-            console.log(`\n${piece.colour} ${piece.type.id}:`);
-            console.log(`A ${destination_square.occupation.colour} ${destination_square.occupation.type.id} is occupying the square at ${destination_square.square}.`);
-            console.log(opposing_piece_array);
         }
         piece.location = valid_move;
         board_temp = refreshBoard(generateBoard(), piece_array, opposing_piece_array);
-        console.log(displayBoard(board_temp, piece.colour));
 
         if (!inCheck(board_temp, piece_array)) {
             defending_moves.push(valid_move);
@@ -722,7 +719,7 @@ function startGame(game) {
 
         // Moves left
         if (piece_array.length > 0) {
-            console.log(`Currently, ${inCheck(board, piece_array) ? "you are" : "you are not"} in check.\nSelect a piece by typing its square. (Example: A2)\nMoveable pieces: ${piece_display}`);
+            console.log(`Currently, ${inCheck(board, isWhite(colour) ? game.white : game.black) ? "you are" : "you are not"} in check.\nSelect a piece by typing its square. (Example: A2)\nMoveable pieces: ${piece_display}`);
 
             // Prompt again if invalid selection given
             while (return_piece === null) {
@@ -749,7 +746,7 @@ function startGame(game) {
 
     function chooseMove(piece) {
         let return_move = null;
-        let moves = getValidMoves(board, piece);
+        let moves = inCheck(board, isWhite(piece.colour) ? white : black) ? getDefendingMoves(board, piece, game.white, game.black) : getValidMoves(board, piece);
         console.log(displayBoard(board, colour, moves));
         console.log(`\nYou selected your ${piece.type.id}. No taking it back.\nMove by typing the square to move to. (Example: A1)\n\nPossible moves: ${displayMoves(board, moves)}`);
 
@@ -781,11 +778,9 @@ function startGame(game) {
             }
 
             // Black's turn, remove a white piece.
-            else if (!game.turn) {
+            else {
                 white = removePiece(white, move_square.occupation);
             }
-
-            else throw ("Strange error occured..."); // This error is very hard to get
         }
 
         // It is no longer the first move
