@@ -332,6 +332,7 @@ function removePiece(piece_array, piece) {
     return updated_piece_array;
 }
 
+// Check if there's a blockage between a piece's square and the square it's moving to.
 function moveObstructed(board, piece, move) {
     let movePath = [];
 
@@ -340,7 +341,7 @@ function moveObstructed(board, piece, move) {
         let x_offset = move[0];
         let y_offset = move[1];
 
-        // Diagonal
+        // Diagonal. (Bishops, etc.)
         if (Math.abs(x_offset) === Math.abs(y_offset)) {
 
             x_offset = x_offset > 0 ? x_offset - 1 : x_offset + 1;
@@ -358,7 +359,7 @@ function moveObstructed(board, piece, move) {
             }
         }
 
-        // Longitudinal
+        // Longitudinal. (Rooks, etc.)
         else if (x_offset === 0 || y_offset === 0) {
 
             // Y movement
@@ -746,7 +747,7 @@ function startGame(game) {
 
     function chooseMove(piece) {
         let return_move = null;
-        let moves = inCheck(board, isWhite(piece.colour) ? white : black) ? getDefendingMoves(board, piece, game.white, game.black) : getValidMoves(board, piece);
+        let moves = inCheck(board, isWhite(piece.colour) ? game.white : game.black) ? getDefendingMoves(board, piece, game.white, game.black) : getValidMoves(board, piece);
         console.log(displayBoard(board, colour, moves));
         console.log(`\nYou selected your ${piece.type.id}. No taking it back.\nMove by typing the square to move to. (Example: A1)\n\nPossible moves: ${displayMoves(board, moves)}`);
 
@@ -774,12 +775,12 @@ function startGame(game) {
 
             // White's turn, remove the black piece.
             if (game.turn) {
-                black = removePiece(black, move_square.occupation);
+                game.black = removePiece(game.black, move_square.occupation);
             }
 
             // Black's turn, remove a white piece.
             else {
-                white = removePiece(white, move_square.occupation);
+                game.white = removePiece(game.white, move_square.occupation);
             }
         }
 
@@ -802,8 +803,8 @@ function startGame(game) {
             let move = chooseMove(piece); // Prompt the user to choose a move.
             board = generateBoard();
             movePiece(piece, move); // Update the piece's new position. (CURRENTLY BROKEN, PIECES CAN MOVE ANYWHERE)
-            updateBoard(board, white); // Update white pieces
-            updateBoard(board, black); // Update black pieces
+            updateBoard(board, game.white); // Update white pieces
+            updateBoard(board, game.black); // Update black pieces
             game.turn = !game.turn; // Change turns.
         }
 
