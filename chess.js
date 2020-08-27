@@ -770,22 +770,17 @@ function startGame(game) {
         let current_square = getSquare(board, piece.location);
         let move_square = getSquare(board, move);
 
-        console.log(move_square);
         // Taking a piece
         if (move_square.occupation !== null) {
 
             // White's turn, remove the black piece.
             if (game.turn) {
-                console.log(game.black.length);
                 game.black = removePiece(game.black, move_square.occupation);
-                console.log(game.black.length);
             }
 
             // Black's turn, remove a white piece.
             else {
-                console.log(game.white.length);
                 game.white = removePiece(game.white, move_square.occupation);
-                console.log(game.white.length);
             }
         }
 
