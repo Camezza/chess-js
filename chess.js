@@ -332,6 +332,55 @@ function removePiece(piece_array, piece) {
     return updated_piece_array;
 }
 
+// 1. Get the move offset to determine the direction of the move
+// 2. Loop until a piece is encountered or the position doesn't exist on the board.
+// 3. Add all positions to an array & return
+function getInfinitePieceMoves(board, offset) {
+    let movePath = [];
+
+    let x_offset = offset[0];
+    let y_offset = offset[1];
+
+    // Diagonal. (Bishops, etc.)
+    if (Math.abs(x_offset) === Math.abs(y_offset)) {
+        let coords = [x_offset, y_offset];
+        let square = getSquare(board, coords);
+
+        // 
+        while (square !== null && square.occupation === null) {
+            movePath.push(coords);
+            x_offset > 0 ? x_offset-- : x_offset++;
+            y_offset > 0 ? y_offset-- : y_offset++;
+            coords = [x_offset, y_offset];
+            square = getSquare(board, coords);
+        }
+    }
+
+    // Longitudinal. (Rooks, etc.)
+    else if (x_offset === 0 || y_offset === 0) {
+        let coords = [x_offset, y_offset];
+        let square = getSquare(board, coords);
+
+        while (square !== null && square.occupation === null) {
+            movePath.push(coords);
+
+            // Y movement
+            if (x_offset === 0) {
+                y_offset > 0 ? y_offset-- : y_offset++; // Start 1 above/below the piece, don't check the piece's square
+            }
+
+            // X movement
+            else if (y_offset === 0) {
+                x_offset > 0 ? x_offset-- : x_offset++;
+            }
+
+            coords = [x_offset, y_offset];
+            square = getSquare(board, coords);
+        }
+    }
+    return movePath;
+}
+
 // Check if there's a blockage between a piece's square and the square it's moving to.
 function moveObstructed(board, piece, move) {
     let movePath = [];
@@ -364,7 +413,7 @@ function moveObstructed(board, piece, move) {
 
             // Y movement
             if (x_offset === 0) {
-                y_offset = y_offset > 0 ? (y_offset - 1) : (y_offset + 1);
+                y_offset = y_offset > 0 ? (y_offset - 1) : (y_offset + 1); // Start 1 above/below the piece, don't check the piece's square
                 for (let y = 0; y_offset > 0 ? (y < y_offset) : (y > y_offset); y_offset > 0 ? y++ : y--) {
                     let y_index_offset = y_offset > 0 ? 1 : -1;
                     let path_move = [0, y + y_index_offset];
@@ -405,7 +454,7 @@ function moveObstructed(board, piece, move) {
 // ToDo: 
 // - Infinite pieces integration
 // - Castling
-// - Check
+// - Moving into check
 function getValidMoves(board, piece) {
     let moves = piece.type.moves;
     let valid_moves = [];
@@ -413,6 +462,11 @@ function getValidMoves(board, piece) {
     // First move of a piece
     if (!piece.moved) {
         moves = moves.concat(piece.type.firstmoves);
+    }
+
+    // Piece can move cardinally in each direction
+    if (piece.type.infinite) {
+        moves = moves.concat(getInfinitePieceMoves(board, moves));
     }
 
     // Pawns have moves they can only execute upon taking a piece
@@ -684,11 +738,6 @@ function getDefendingPieces(board, colour, white, black) {
     return return_piece_array;
 }
 
-// ToDo: Implement piece blocking
-// 1. Get all possible moves of all defending pieces.
-// 2. Create new boards & apply check with the updated move positions.
-// 3. Get a list of moves where the king will no longer be in check.
-// Keep this function intact, it only needs to check if the king is currently in check.
 function inCheck(board, piece_array) {
     for (let i = 0, il = piece_array.length; i < il; i++) {
         let piece = piece_array[i];
