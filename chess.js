@@ -466,7 +466,13 @@ function getValidMoves(board, piece) {
 
     // Piece can move cardinally in each direction
     if (piece.type.infinite) {
-        moves = moves.concat(getInfinitePieceMoves(board, moves));
+        let temporary_moves = Array.from(moves);
+
+        // Add infinite moves to the total moves.
+        for (let i = 0, il = temporary_moves.length; i < il; i++) {
+            let temporary_move = temporary_moves[i];
+            moves = moves.concat(getInfinitePieceMoves(board, temporary_move)); // not worky
+        }
     }
 
     // Pawns have moves they can only execute upon taking a piece
@@ -529,9 +535,11 @@ function getValidMoves(board, piece) {
                         valid = false;
                     }
 
-                    // A piece is between the piece's location and destination
-                    if (moveObstructed(board, piece, moves[i])) {
-                        valid = false;
+                    // A piece is between the piece's location and destination. Doesn't apply for knights
+                    if (piece.type.id !== "knight") {
+                        if (moveObstructed(board, piece, moves[i])) {
+                            valid = false;
+                        }
                     }
                 }
             }
