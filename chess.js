@@ -258,38 +258,27 @@ function displayBoard(board, colour, move_sequence) {
 
 // Gets a square from an x and y value
 function getSquare(board, vec2) {
-
-    // Do this if the position exists
-    try {
     let x = vec2[0], y = vec2[1];
     let row = board[y];
     let square = row[x];
     return square;
-    } 
-    
-    // Board position doesn't exist
-    catch (error) {
-        return null;
-    }
 }
 
 // one + two. Returns the new vector or null if it's too far out of range.
 function addVector(board, vec2_one, vec2_two) {
-    let y_maximum = board.length - 1; // Minus one. Vectors start at 0.
-    let x_maximum = board[0].length - 1;
 
     let x_offset = vec2_one[0] + vec2_two[0];
     let y_offset = vec2_one[1] + vec2_two[1];
+    let coords = [x_offset, y_offset];
 
     // Out of range. Cannot make a move outside the board.
-    if (x_offset > x_maximum || x_offset < 0 || y_offset > y_maximum || y_offset < 0) {
-        return null;
-    }
+    return verifyVector(board, coords) ? coords : null;
+}
 
-    // Valid position
-    else {
-        return [x_offset, y_offset];
-    }
+function verifyVector(board, vec2) {
+    let y_maximum = board.length; // Minus one. Vectors start at 0.
+    let x_maximum = board[0].length;
+    return (vec2[0] >= 0 && vec2[0] < x_maximum) && (vec2[1] >= 0 && vec2[1] < y_maximum);
 }
 
 // Updates the board with new positions of the pieces, returns the new board
@@ -352,7 +341,7 @@ function getInfinitePieceMoves(board, offset) {
 
     // Diagonal. (Bishops, etc.)
     if (Math.abs(x_offset) === Math.abs(y_offset)) {
-        let coords = addVector(board, [x_offset, y_offset], [0, 0]);
+        let coords = verifyVector(board, [x_offset, y_offset]) ? [x_offset, y_offset] : null;
         let square = coords === null ? {} : getSquare(board, coords);
 
         // 
@@ -360,16 +349,15 @@ function getInfinitePieceMoves(board, offset) {
             movePath.push(coords);
             x_offset > 0 ? x_offset++ : x_offset--;
             y_offset > 0 ? y_offset++ : y_offset--;
-            coords = addVector(board, [x_offset, y_offset], [0, 0]);
+            coords = verifyVector(board, [x_offset, y_offset]) ? [x_offset, y_offset] : null;
             square = coords === null ? {} : getSquare(board, coords)
         }
     }
 
     // Longitudinal. (Rooks, etc.)
     else if (x_offset === 0 || y_offset === 0) {
-        let coords = addVector(board, [x_offset, y_offset], [0, 0]);
+        let coords = verifyVector(board, [x_offset, y_offset]) ? [x_offset, y_offset] : null;// This seems to be the problem.
         let square = coords === null ? {} : getSquare(board, coords)
-        console.log(square);
 
         while (square.occupation === null) {
             movePath.push(coords);
@@ -384,8 +372,10 @@ function getInfinitePieceMoves(board, offset) {
                 x_offset > 0 ? x_offset++ : x_offset--;
             }
 
-            coords = addVector(board, [x_offset, y_offset], [0, 0]);
+            console.log(`x${x_offset}, y${y_offset}`);
+            coords = coords = verifyVector(board, [x_offset, y_offset]) ? [x_offset, y_offset] : null;
             square = coords === null ? {} : getSquare(board, coords)
+            console.log(square);
         }
     }
     return movePath;
@@ -787,7 +777,7 @@ function startGame(game) {
 
         // Moves left
         if (piece_array.length > 0) {
-            console.log(`Currently, ${inCheck(board, isWhite(colour) ? game.white : game.black) ? "you are" : "you are not"} in check.\nSelect a piece by typing its square. (Example: A2)\nMoveable pieces: ${piece_display}`);
+            console.log(`Currently, ${inCheck(board, isWhite(colour) ? game.white : game.black) ? "you are" : "you are not"} in check.\nSelect a piece by typing its square. (Example: A1)\nMoveable pieces: ${piece_display}`);
 
             // Prompt again if invalid selection given
             while (return_piece === null) {
