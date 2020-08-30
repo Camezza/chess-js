@@ -258,10 +258,19 @@ function displayBoard(board, colour, move_sequence) {
 
 // Gets a square from an x and y value
 function getSquare(board, vec2) {
+
+    // Do this if the position exists
+    try {
     let x = vec2[0], y = vec2[1];
     let row = board[y];
     let square = row[x];
     return square;
+    } 
+    
+    // Board position doesn't exist
+    catch (error) {
+        return null;
+    }
 }
 
 // one + two. Returns the new vector or null if it's too far out of range.
@@ -343,39 +352,40 @@ function getInfinitePieceMoves(board, offset) {
 
     // Diagonal. (Bishops, etc.)
     if (Math.abs(x_offset) === Math.abs(y_offset)) {
-        let coords = [x_offset, y_offset];
-        let square = getSquare(board, coords);
+        let coords = addVector(board, [x_offset, y_offset], [0, 0]);
+        let square = coords === null ? {} : getSquare(board, coords);
 
         // 
-        while (square !== null && square.occupation === null) {
+        while (square.occupation === null) {
             movePath.push(coords);
-            x_offset > 0 ? x_offset-- : x_offset++;
-            y_offset > 0 ? y_offset-- : y_offset++;
-            coords = [x_offset, y_offset];
-            square = getSquare(board, coords);
+            x_offset > 0 ? x_offset++ : x_offset--;
+            y_offset > 0 ? y_offset++ : y_offset--;
+            coords = addVector(board, [x_offset, y_offset], [0, 0]);
+            square = coords === null ? {} : getSquare(board, coords)
         }
     }
 
     // Longitudinal. (Rooks, etc.)
     else if (x_offset === 0 || y_offset === 0) {
-        let coords = [x_offset, y_offset];
-        let square = getSquare(board, coords);
+        let coords = addVector(board, [x_offset, y_offset], [0, 0]);
+        let square = coords === null ? {} : getSquare(board, coords)
+        console.log(square);
 
-        while (square !== null && square.occupation === null) {
+        while (square.occupation === null) {
             movePath.push(coords);
 
             // Y movement
             if (x_offset === 0) {
-                y_offset > 0 ? y_offset-- : y_offset++; // Start 1 above/below the piece, don't check the piece's square
+                y_offset > 0 ? y_offset++ : y_offset--;
             }
 
             // X movement
             else if (y_offset === 0) {
-                x_offset > 0 ? x_offset-- : x_offset++;
+                x_offset > 0 ? x_offset++ : x_offset--;
             }
 
-            coords = [x_offset, y_offset];
-            square = getSquare(board, coords);
+            coords = addVector(board, [x_offset, y_offset], [0, 0]);
+            square = coords === null ? {} : getSquare(board, coords)
         }
     }
     return movePath;
