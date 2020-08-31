@@ -333,37 +333,36 @@ function removePiece(piece_array, piece) {
 // 1. Get the move offset to determine the direction of the move
 // 2. Loop until a piece is encountered or the position doesn't exist on the board.
 // 3. Add all positions to an array & return
-function getInfinitePieceMoves(board, offset) {
+function getInfinitePieceMoves(board, location, offset) {
     let movePath = [];
-
     let x_offset = offset[0];
     let y_offset = offset[1];
 
     // Diagonal. (Bishops, etc.)
     if (Math.abs(x_offset) === Math.abs(y_offset)) {
-        let coords = verifyVector(board, [x_offset, y_offset]) ? [x_offset, y_offset] : null;
+        let coords = addVector(board, location, [x_offset, y_offset]);
         let square = coords === null ? {} : getSquare(board, coords);
 
         // 
         while (square.occupation === null) {
-            movePath.push(coords);
+            movePath.push([x_offset, y_offset]);
             x_offset > 0 ? x_offset++ : x_offset--;
             y_offset > 0 ? y_offset++ : y_offset--;
-            coords = verifyVector(board, [x_offset, y_offset]) ? [x_offset, y_offset] : null;
+            coords = addVector(board, location, [x_offset, y_offset]);
             square = coords === null ? {} : getSquare(board, coords)
         }
     }
 
     // Longitudinal. (Rooks, etc.)
     else if (x_offset === 0 || y_offset === 0) {
-        let coords = verifyVector(board, [x_offset, y_offset]) ? [x_offset, y_offset] : null;// This seems to be the problem.
+        let coords = addVector(board, location, [x_offset, y_offset]);
         let square = coords === null ? {} : getSquare(board, coords)
 
         while (square.occupation === null) {
-            movePath.push(coords);
+            movePath.push([x_offset, y_offset]);
 
             // Y movement
-            if (x_offset === 0) {
+            if (x_offset === 0) { // X_OFFSET SHOULDN'T BE THE ABSOLUTE COORDINATES!!!!!!! 
                 y_offset > 0 ? y_offset++ : y_offset--;
             }
 
@@ -373,7 +372,7 @@ function getInfinitePieceMoves(board, offset) {
             }
 
             console.log(`x${x_offset}, y${y_offset}`);
-            coords = coords = verifyVector(board, [x_offset, y_offset]) ? [x_offset, y_offset] : null;
+            coords = addVector(board, location, [x_offset, y_offset]);
             square = coords === null ? {} : getSquare(board, coords)
             console.log(square);
         }
@@ -471,7 +470,7 @@ function getValidMoves(board, piece) {
         // Add infinite moves to the total moves.
         for (let i = 0, il = temporary_moves.length; i < il; i++) {
             let temporary_move = temporary_moves[i];
-            moves = moves.concat(getInfinitePieceMoves(board, temporary_move)); // not worky
+            moves = moves.concat(getInfinitePieceMoves(board, piece.location, temporary_move)); // not worky
         }
     }
 
