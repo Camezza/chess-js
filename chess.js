@@ -333,12 +333,15 @@ function removePiece(piece_array, piece) {
 // 1. Get the move offset to determine the direction of the move
 // 2. Loop until a piece is encountered or the position doesn't exist on the board.
 // 3. Add all positions to an array & return
+<<<<<<< HEAD
 function getInfinitePieceMoves(board, piece, offset) {
     let piece_take_threshold = 1;
     let piece_take_counter = 0;
 
+=======
+function getInfinitePieceMoves(board, location, offset) {
+>>>>>>> parent of 0ff0b97... Update chess.js
     let movePath = [];
-    let location = piece.location;
     let x_offset = offset[0];
     let y_offset = offset[1];
 
@@ -481,7 +484,7 @@ function getValidMoves(board, piece) {
         // Add infinite moves to the total moves.
         for (let i = 0, il = temporary_moves.length; i < il; i++) {
             let temporary_move = temporary_moves[i];
-            moves = moves.concat(getInfinitePieceMoves(board, piece, temporary_move)); // not worky
+            moves = moves.concat(getInfinitePieceMoves(board, piece.location, temporary_move)); // not worky
         }
     }
 
@@ -563,8 +566,7 @@ function getValidMoves(board, piece) {
     return valid_moves;
 }
 
-// Gets all possible moves of a piece regardless of if it can move there or not. 
-// * Need to implement infinite piece moves
+// Gets all possible moves of a piece regardless of if it can move there or not.
 function getAbsoluteMoves(board, location, moves) {
     let absolute_moves = [];
 
