@@ -334,6 +334,9 @@ function removePiece(piece_array, piece) {
 // 2. Loop until a piece is encountered or the position doesn't exist on the board.
 // 3. Add all positions to an array & return
 function getInfinitePieceMoves(board, piece, offset) {
+    let piece_take_threshold = 1;
+    let piece_take_counter = 0;
+
     let movePath = [];
     let location = piece.location;
     let x_offset = offset[0];
@@ -343,14 +346,21 @@ function getInfinitePieceMoves(board, piece, offset) {
     if (Math.abs(x_offset) === Math.abs(y_offset)) {
         let coords = addVector(board, location, [x_offset, y_offset]);
         let square = coords === null ? {} : getSquare(board, coords);
+        let occupation = square.occupation || null;
+        let colour = occupation !== null ? occupation.colour : null;
 
         // 
-        while (square.occupation === null) {
+        while ((occupation === null || isWhite(colour) === !isWhite(piece.colour)) && piece_counter < piece_take_threshold) {
             movePath.push([x_offset, y_offset]);
             x_offset > 0 ? x_offset++ : x_offset--;
             y_offset > 0 ? y_offset++ : y_offset--;
             coords = addVector(board, location, [x_offset, y_offset]);
             square = coords === null ? {} : getSquare(board, coords)
+
+            // Taking a piece
+            if (isWhite(square.occupation.colour) === !isWhite(piece.colour)) {
+                piece_counter++
+            }
         }
     }
 
