@@ -158,6 +158,10 @@ function displayBoard(board, colour, move_sequence) {
                 display_square = 'x';
             }
 
+            if (square.checked[0] || square.checked[1]) {
+                prefix = '\x1b[31m';
+            }
+
             // Empty square
             if (square.occupation !== null) {
                 let piece = square.occupation;
