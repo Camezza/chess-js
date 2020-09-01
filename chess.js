@@ -333,9 +333,8 @@ function removePiece(piece_array, piece) {
 // 1. Get the move offset to determine the direction of the move
 // 2. Loop until a piece is encountered or the position doesn't exist on the board.
 // 3. Add all positions to an array & return
-function getInfinitePieceMoves(board, piece, offset) {
+function getInfinitePieceMoves(board, piece, offset, maximum_take_threshold) {
     let movePath = [];
-    let maximum_take_threshold = 1;
     let location = piece.location;
     let x_offset = offset[0];
     let y_offset = offset[1];
@@ -349,7 +348,7 @@ function getInfinitePieceMoves(board, piece, offset) {
         let takeable = isWhite(colour) === !isWhite(piece.colour);
 
         // Square empty, or taking a piece
-        while (square.occupation === null && piece_counter < maximum_take_threshold) {
+        while ((square.occupation === null || takeable) && piece_counter < maximum_take_threshold) {
 
             // Piece can be taken
             if (takeable) {
@@ -377,7 +376,7 @@ function getInfinitePieceMoves(board, piece, offset) {
         let colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
         let takeable = isWhite(colour) === !isWhite(piece.colour);
 
-        while (square.occupation === null && piece_counter < maximum_take_threshold) {
+        while ((square.occupation === null || takeable) && piece_counter < maximum_take_threshold) {
 
             if (takeable) {
                 piece_counter++;
@@ -387,7 +386,7 @@ function getInfinitePieceMoves(board, piece, offset) {
             movePath.push([x_offset, y_offset]);
 
             // Y movement
-            if (x_offset === 0) { // X_OFFSET SHOULDN'T BE THE ABSOLUTE COORDINATES!!!!!!! 
+            if (x_offset === 0) {
                 y_offset > 0 ? y_offset++ : y_offset--;
             }
 
@@ -477,7 +476,6 @@ function moveObstructed(board, piece, move) {
 
 // Return a list of valid vec2 moves relative to a piece's location.
 // ToDo: 
-// - Infinite pieces integration
 // - Castling
 // - Moving into check
 function getValidMoves(board, piece) {
@@ -491,13 +489,14 @@ function getValidMoves(board, piece) {
 
     // Piece can move cardinally in each direction
     if (piece.type.infinite) {
-        let temporary_moves = Array.from(moves);
+        let temporary_moves = []
 
         // Add infinite moves to the total moves.
-        for (let i = 0, il = temporary_moves.length; i < il; i++) {
-            let temporary_move = temporary_moves[i];
-            moves = moves.concat(getInfinitePieceMoves(board, piece, temporary_move)); // not worky
+        for (let i = 0, il = moves.length; i < il; i++) {
+            let temporary_move = moves[i];
+            temporary_moves = temporary_moves.concat(getInfinitePieceMoves(board, piece, temporary_move, 1));
         }
+        moves = temporary_moves;
     }
 
     // Pawns have moves they can only execute upon taking a piece
@@ -580,12 +579,12 @@ function getValidMoves(board, piece) {
 
 // Gets all possible moves of a piece regardless of if it can move there or not. 
 // * Need to implement infinite piece moves
-function getAbsoluteMoves(board, location, moves) {
+function getAbsoluteMoves(board, piece, moves) {
     let absolute_moves = [];
 
     for (let i = 0, il = moves.length; i < il; i++) {
         let move = moves[i];
-        let absolute_move = addVector(board, location, move);
+        let absolute_move = addVector(board, piece.location, move);
 
         // Move is on the board.
         if (absolute_move !== null) {
@@ -601,8 +600,25 @@ function getTakeMoves(piece) {
 
     // No piece-specific take moves, e.g. pawn can only take diagonal
     if (piece.type.takemoves.length === 0) {
-        for (let i = 0, il = piece.type.moves.length; i < il; i++) {
-            moves.push(piece.type.moves[i]);
+
+        // Piece can move cardinally in each direction
+        if (piece.type.infinite) {
+            moves = piece.type.moves;
+            let temporary_moves = []
+
+            // Add infinite moves to the total moves.
+            for (let i = 0, il = moves.length; i < il; i++) {
+                let temporary_move = moves[i];
+                temporary_moves = temporary_moves.concat(getInfinitePieceMoves(board, piece, temporary_move, 1));
+            }
+            moves = temporary_moves;
+        }
+
+        // Absolute move offsets
+        else {
+            for (let i = 0, il = piece.type.moves.length; i < il; i++) {
+                moves.push(piece.type.moves[i]);
+            }
         }
     }
 
@@ -699,7 +715,7 @@ function applySquareCheck(board, piece_array) {
     for (let i = 0, il = piece_array.length; i < il; i++) {
         let piece = piece_array[i];
         let take_moves = getTakeMoves(piece);
-        let moves = getAbsoluteMoves(board, piece.location, take_moves);
+        let moves = getAbsoluteMoves(board, piece, take_moves);
 
         for (let x = 0, xl = moves.length; x < xl; x++) {
             let move = moves[x];
