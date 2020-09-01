@@ -335,31 +335,55 @@ function removePiece(piece_array, piece) {
 // 3. Add all positions to an array & return
 function getInfinitePieceMoves(board, piece, offset) {
     let movePath = [];
+    let maximum_take_threshold = 1;
     let location = piece.location;
     let x_offset = offset[0];
     let y_offset = offset[1];
 
     // Diagonal. (Bishops, etc.)
     if (Math.abs(x_offset) === Math.abs(y_offset)) {
+        let piece_counter = 0;
         let coords = addVector(board, location, [x_offset, y_offset]);
         let square = coords === null ? {} : getSquare(board, coords);
+        let colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
+        let takeable = isWhite(colour) === !isWhite(piece.colour);
 
-        // 
-        while (square.occupation === null) {
+        // Square empty, or taking a piece
+        while (square.occupation === null && piece_counter < maximum_take_threshold) {
+
+            // Piece can be taken
+            if (takeable) {
+                piece_counter++;
+            }
+
+            // Apply increments/decrements and add the new position
             movePath.push([x_offset, y_offset]);
             x_offset > 0 ? x_offset++ : x_offset--;
             y_offset > 0 ? y_offset++ : y_offset--;
+
+            // Update values
             coords = addVector(board, location, [x_offset, y_offset]);
-            square = coords === null ? {} : getSquare(board, coords)
+            square = coords === null ? {} : getSquare(board, coords);
+            colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
+            takeable = isWhite(colour) === !isWhite(piece.colour);
         }
     }
 
     // Longitudinal. (Rooks, etc.)
     else if (x_offset === 0 || y_offset === 0) {
+        let piece_counter = 0;
         let coords = addVector(board, location, [x_offset, y_offset]);
-        let square = coords === null ? {} : getSquare(board, coords)
+        let square = coords === null ? {} : getSquare(board, coords);
+        let colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
+        let takeable = isWhite(colour) === !isWhite(piece.colour);
 
-        while (square.occupation === null) {
+        while (square.occupation === null && piece_counter < maximum_take_threshold) {
+
+            if (takeable) {
+                piece_counter++;
+            }
+
+            // Increment / Decrement
             movePath.push([x_offset, y_offset]);
 
             // Y movement
@@ -372,10 +396,11 @@ function getInfinitePieceMoves(board, piece, offset) {
                 x_offset > 0 ? x_offset++ : x_offset--;
             }
 
-            console.log(`x${x_offset}, y${y_offset}`);
+            // Update values
             coords = addVector(board, location, [x_offset, y_offset]);
-            square = coords === null ? {} : getSquare(board, coords)
-            console.log(square);
+            square = coords === null ? {} : getSquare(board, coords);
+            colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
+            takeable = isWhite(colour) === !isWhite(piece.colour);
         }
     }
     return movePath;
