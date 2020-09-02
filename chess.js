@@ -908,4 +908,3 @@ board = updateBoard(board, white);
 board = updateBoard(board, black);
 let game = new generateGame("main", board, white, black, true);
 startGame(game);
-
