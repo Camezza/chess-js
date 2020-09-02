@@ -334,61 +334,38 @@ function removePiece(piece_array, piece) {
     return updated_piece_array;
 }
 
-// 1. Get the move offset to determine the direction of the move
-// 2. Loop until a piece is encountered or the position doesn't exist on the board.
-// 3. Add all positions to an array & return
-function getInfinitePieceMoves(board, piece, offset, maximum_take_threshold) {
+// Will get all possible moves in a directonal offset
+// maximum_take_threshold: The number of pieces to ignore in a direction. 1 to stop at first piece. (Integer)
+// applying_check: If the function is being used to apply check squares. (Boolean)
+function getInfinitePieceMoves(board, piece, offset, maximum_take_threshold, applying_check) {
+    // Iteration
     let movePath = [];
-    let location = piece.location;
+    let piece_counter = 0;
+
+    // Coordinates
     let x_offset = offset[0];
     let y_offset = offset[1];
+    let coords = addVector(board, piece.location, [x_offset, y_offset]);
+    let square = coords === null ? {} : getSquare(board, coords);
 
-    // Diagonal. (Bishops, etc.)
-    if (Math.abs(x_offset) === Math.abs(y_offset)) {
-        let piece_counter = 0;
-        let coords = addVector(board, location, [x_offset, y_offset]);
-        let square = coords === null ? {} : getSquare(board, coords);
-        let colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
-        let takeable = isWhite(colour) === !isWhite(piece.colour);
+    // Misc.
+    let colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
+    let takeable = isWhite(colour) === !isWhite(piece.colour);
 
-        // Square empty, or taking a piece
-        while ((square.occupation === null || takeable) && piece_counter < maximum_take_threshold) {
+    // Square empty, or taking a piece
+    while ((square.occupation === null || takeable || applying_check) && piece_counter < maximum_take_threshold) {
 
-            // Piece can be taken
-            if (takeable) {
-                piece_counter++;
-            }
+        // Apply increments/decrements and add the new position
+        movePath.push([x_offset, y_offset]);
 
-            // Apply increments/decrements and add the new position
-            movePath.push([x_offset, y_offset]);
+        // Diagonal. (Bishops, etc.)
+        if (Math.abs(x_offset) === Math.abs(y_offset)) {
             x_offset > 0 ? x_offset++ : x_offset--;
             y_offset > 0 ? y_offset++ : y_offset--;
-
-            // Update values
-            coords = addVector(board, location, [x_offset, y_offset]);
-            square = coords === null ? {} : getSquare(board, coords);
-            colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
-            takeable = isWhite(colour) === !isWhite(piece.colour);
         }
-    }
 
-    // Longitudinal. (Rooks, etc.)
-    else if (x_offset === 0 || y_offset === 0) {
-        let piece_counter = 0;
-        let coords = addVector(board, location, [x_offset, y_offset]);
-        let square = coords === null ? {} : getSquare(board, coords);
-        let colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
-        let takeable = isWhite(colour) === !isWhite(piece.colour);
-
-        while ((square.occupation === null || takeable) && piece_counter < maximum_take_threshold) {
-
-            if (takeable) {
-                piece_counter++;
-            }
-
-            // Increment / Decrement
-            movePath.push([x_offset, y_offset]);
-
+        // Longitudinal. (Rooks, etc.)
+        else if (x_offset === 0 || y_offset === 0) {
             // Y movement
             if (x_offset === 0) {
                 y_offset > 0 ? y_offset++ : y_offset--;
@@ -398,18 +375,26 @@ function getInfinitePieceMoves(board, piece, offset, maximum_take_threshold) {
             else if (y_offset === 0) {
                 x_offset > 0 ? x_offset++ : x_offset--;
             }
-
-            // Update values
-            coords = addVector(board, location, [x_offset, y_offset]);
-            square = coords === null ? {} : getSquare(board, coords);
-            colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
-            takeable = isWhite(colour) === !isWhite(piece.colour);
         }
+        else return null;
+
+        // Piece can be taken / Applying check to own pieces
+        if (takeable || applying_check) {
+            piece_counter++;
+        }
+
+        // Update values
+        coords = addVector(board, piece.location, [x_offset, y_offset]);
+        square = coords === null ? {} : getSquare(board, coords);
+        colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
+        takeable = isWhite(colour) === !isWhite(piece.colour);
+
     }
     return movePath;
 }
 
 // Check if there's a blockage between a piece's square and the square it's moving to.
+// ToDo: maybe clean this up a little for efficiency
 function moveObstructed(board, piece, move) {
     let movePath = [];
 
@@ -498,7 +483,7 @@ function getValidMoves(board, piece) {
         // Add infinite moves to the total moves.
         for (let i = 0, il = moves.length; i < il; i++) {
             let temporary_move = moves[i];
-            temporary_moves = temporary_moves.concat(getInfinitePieceMoves(board, piece, temporary_move, 1));
+            temporary_moves = temporary_moves.concat(getInfinitePieceMoves(board, piece, temporary_move, 1, false));
         }
         moves = temporary_moves;
     }
@@ -599,7 +584,7 @@ function getAbsoluteMoves(board, piece, moves) {
 }
 
 // Get relative moves that a piece can use to take.
-function getTakeMoves(piece) {
+function getTakeMoves(board, piece) {
     let moves = [];
 
     // No piece-specific take moves, e.g. pawn can only take diagonal
@@ -607,13 +592,13 @@ function getTakeMoves(piece) {
 
         // Piece can move cardinally in each direction
         if (piece.type.infinite) {
-            moves = piece.type.moves;
+            moves = Array.from(piece.type.moves);
             let temporary_moves = []
 
             // Add infinite moves to the total moves.
             for (let i = 0, il = moves.length; i < il; i++) {
                 let temporary_move = moves[i];
-                temporary_moves = temporary_moves.concat(getInfinitePieceMoves(board, piece, temporary_move, 1));
+                temporary_moves = temporary_moves.concat(getInfinitePieceMoves(board, piece, temporary_move, 1, true));
             }
             moves = temporary_moves;
         }
@@ -627,7 +612,7 @@ function getTakeMoves(piece) {
     }
 
     // Pawn unique take moves
-    else if (piece.type.takemoves.length > 0) {
+    else {
         for (let x = 0, xl = piece.type.takemoves.length; x < xl; x++) {
             moves.push(piece.type.takemoves[x]);
         }
@@ -718,7 +703,7 @@ function applySquareCheck(board, piece_array) {
     // Apply check squares
     for (let i = 0, il = piece_array.length; i < il; i++) {
         let piece = piece_array[i];
-        let take_moves = getTakeMoves(piece);
+        let take_moves = getTakeMoves(board, piece);
         let moves = getAbsoluteMoves(board, piece, take_moves);
 
         for (let x = 0, xl = moves.length; x < xl; x++) {
