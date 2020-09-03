@@ -700,7 +700,7 @@ function applySquareCheck(board, piece_array) {
 }
 
 /*
-** Checkers
+** Checkers 
 */
 
 // Confirms if a set of coordinates is on the board
