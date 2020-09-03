@@ -927,7 +927,37 @@ function startGame(game) {
     }
 }
 
-// Create values for a game
+/*
+** AI
+*/
+
+// Generates a move based on the board setting and its colour
+// Cost rules:
+// Add costs for defending a piece, threatening a piece, taking a piece and check. Deduct cost for moving to a check square.
+// - Defence: +2
+// - Threat: +1
+// - Take: +(opponent piece cost)
+// - Check: +2
+// - Checked: -(AI piece cost)
+// 1. Get all possible moves and find the best 3. 
+// 2. Find the 3 best moves the opponent can make. Loop this and calculate the final cost for each path
+//
+function moveAI(board, colour) {
+
+    // Return the AI's piece and the location it's moving to
+    return {
+        piece: null,
+        move: null,
+    }
+}
+
+
+function getBestMoves(board, colour) {
+
+}
+/*
+** Initialisation
+*/
 var board = generateBoard();
 var white = generateFormation("white");
 var black = generateFormation('black');
