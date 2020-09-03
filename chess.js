@@ -797,6 +797,18 @@ function inCheck(board, piece_array) {
     return false;
 }
 
+function isWhite(colour) {
+    //return colour === "white"; // Removed to be safe. case-if is a better way of handling this
+    switch (colour) {
+        case "white":
+            return true;
+        case "black":
+            return false;
+        default:
+            throw (`Invalid colour specified "${colour}."`);
+    }
+}
+
 /*
 ** Miscellaneous
 */
