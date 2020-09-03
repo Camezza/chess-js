@@ -794,6 +794,16 @@ function inCheck(board, piece_array) {
     return false;
 }
 
+// Checks if moving a piece will put them in check
+function possibleCheck(board, white, black, piece, offset) {
+    let piece_array = isWhite(piece.colour) ? white : black;
+    piece.location = offset;
+    board = generateBoard();
+    updateBoard(board, white);
+    updateBoard(board, black);
+    return inCheck(board, piece_array);
+}
+
 function startGame(game) {
     let board = game.board;
     console.log(`\nStarting game '${game.id}'.`);
