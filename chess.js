@@ -22,22 +22,10 @@ const pieces = {
 };
 
 /*
-// Board, piece & interface setup. Misc. included
+** Object generation
 */
 
-function isWhite(colour) {
-    //return colour === "white"; // Removed to be safe. case-if is a better way of handling this
-    switch (colour) {
-        case "white":
-            return true;
-        case "black":
-            return false;
-        default:
-            throw (`Invalid colour specified "${colour}."`);
-    }
-}
-
-// Generates a chess piece
+// Creates a chess piece object
 function generatePiece(type, colour, vec2) {
 
     // Reverse pawn direction for black
@@ -60,7 +48,7 @@ function generatePiece(type, colour, vec2) {
     };
 };
 
-// Returns an empty board configuration
+// Creates an empty board configuration
 function generateBoard() {
     let board = [];
 
@@ -82,7 +70,7 @@ function generateBoard() {
     return board;
 }
 
-// Returns a normal chess configuration
+// Returns a normal chess configuration for a colour
 function generateFormation(colour) {
     let formation = [];
     let primary_row, pawn_row; // Which row the pieces are generated in
@@ -115,6 +103,21 @@ function generateFormation(colour) {
     return formation;
 }
 
+// Creates a new game object
+function generateGame(id, board, white, black, turn) {
+    this.id = id;
+    this.board = board;
+    this.white = white;
+    this.black = black;
+    this.turn = turn; // True is white, false is black.
+    this.active = true;
+};
+
+/*
+** GUI & User interface
+*/
+
+// Displays an interface of the chess board
 function displayBoard(board, colour, move_sequence) {
     move_sequence = move_sequence || [];
     let display_board = [];
@@ -260,6 +263,35 @@ function displayBoard(board, colour, move_sequence) {
     return display;
 }
 
+// Prompts the player to choose a valid piece on the board to move.
+function displayPieces(board, piece_array) {
+    let piece_display = "";
+
+    // Get colour pieces on board | make it get allowed moves
+    for (let i = 0, il = piece_array.length; i < il; i++) {
+        let piece = piece_array[i];
+        piece_display += `[${piece.type.id} at ${getSquare(board, piece.location).square}]${(i + 1) === il ? '.' : ','} `;
+    }
+    return piece_display;
+}
+
+// Prompts the player to choose a valid move on the board.
+function displayMoves(board, moves) {
+    let move_display = "";
+
+    for (let i = 0, il = moves.length; i < il; i++) {
+        let move = moves[i];
+        let square = getSquare(board, move);
+        let prefix = square.occupation === null ? "" : `Take ${square.occupation.type.id} at `;
+        move_display += `[${prefix}${square.square}]${i + 1 === il ? "." : ","} `;
+    }
+    return move_display;
+}
+
+/*
+** Getters
+*/
+
 // Gets a square from an x and y value
 function getSquare(board, vec2) {
     let x = vec2[0], y = vec2[1];
@@ -268,42 +300,7 @@ function getSquare(board, vec2) {
     return square;
 }
 
-// one + two. Returns the new vector or null if it's too far out of range.
-function addVector(board, vec2_one, vec2_two) {
-
-    let x_offset = vec2_one[0] + vec2_two[0];
-    let y_offset = vec2_one[1] + vec2_two[1];
-    let coords = [x_offset, y_offset];
-
-    // Out of range. Cannot make a move outside the board.
-    return verifyVector(board, coords) ? coords : null;
-}
-
-function verifyVector(board, vec2) {
-    let y_maximum = board.length; // Minus one. Vectors start at 0.
-    let x_maximum = board[0].length;
-    return (vec2[0] >= 0 && vec2[0] < x_maximum) && (vec2[1] >= 0 && vec2[1] < y_maximum);
-}
-
-// Updates the board with new positions of the pieces, returns the new board
-function updateBoard(board, piece_array) {
-
-    // For each piece in the array
-    for (let i = 0, il = piece_array.length; i < il; i++) {
-        let piece = piece_array[i];
-        let x = piece.location[0]; // Look for the x location
-        let y = piece.location[1]; // Look for the y location
-        let row = board[y]; // Board at index y
-        let square = row[x]; // Row at index x
-        square.occupation = piece;
-
-        row[x] = square; // Update the square
-        board[y] = row; // Update the row
-    }
-    applySquareCheck(board, piece_array);
-    return board;
-}
-
+// Gets a set of coordinates from a square name
 function getLocationBySquare(square) {
     if (square.length === 2) {
         let letter = square[0].toString();
@@ -316,22 +313,6 @@ function getLocationBySquare(square) {
         }
     }
     return null;
-}
-
-// Removes a piece from a piece array and returns the updated array
-function removePiece(piece_array, piece) {
-    let updated_piece_array = [];
-
-    // Each piece
-    for (let i = 0, il = piece_array.length; i < il; i++) {
-        let iterated_piece = piece_array[i];
-
-        // Add everything but the removed piece
-        if (iterated_piece !== piece) {
-            updated_piece_array.push(iterated_piece);
-        }
-    };
-    return updated_piece_array;
 }
 
 // Will get all possible moves in a directonal offset
@@ -391,76 +372,6 @@ function getInfinitePieceMoves(board, piece, offset, maximum_take_threshold, app
 
     }
     return movePath;
-}
-
-// Check if there's a blockage between a piece's square and the square it's moving to.
-// ToDo: maybe clean this up a little for efficiency
-function moveObstructed(board, piece, move) {
-    let movePath = [];
-
-    // Knights can jump over pieces and cannot be obstructed
-    if (piece.type.id !== "knight") {
-        let x_offset = move[0];
-        let y_offset = move[1];
-
-        // Diagonal. (Bishops, etc.)
-        if (Math.abs(x_offset) === Math.abs(y_offset)) {
-
-            x_offset = x_offset > 0 ? x_offset - 1 : x_offset + 1;
-            y_offset = y_offset > 0 ? y_offset - 1 : y_offset + 1;
-
-            for (let x = 0, y = 0; (x_offset > 0 ? (x < x_offset) : (x > x_offset)) || (y_offset > 0 ? (y < y_offset) : (y > y_offset));) {
-                let x_index_offset = x_offset > 0 ? 1 : -1;
-                let y_index_offset = y_offset > 0 ? 1 : -1;
-                let path_move = [x + x_index_offset, y + y_index_offset];
-                movePath.push(path_move);
-
-                // Increment / Decrement
-                x_offset > 0 ? x++ : x--;
-                y_offset > 0 ? y++ : y--;
-            }
-        }
-
-        // Longitudinal. (Rooks, etc.)
-        else if (x_offset === 0 || y_offset === 0) {
-
-            // Y movement
-            if (x_offset === 0) {
-                y_offset = y_offset > 0 ? (y_offset - 1) : (y_offset + 1); // Start 1 above/below the piece, don't check the piece's square
-                for (let y = 0; y_offset > 0 ? (y < y_offset) : (y > y_offset); y_offset > 0 ? y++ : y--) {
-                    let y_index_offset = y_offset > 0 ? 1 : -1;
-                    let path_move = [0, y + y_index_offset];
-                    movePath.push(path_move);
-                }
-            }
-
-            // X movement
-            else if (y_offset === 0) {
-                x_offset = x_offset > 0 ? (x_offset - 1) : (x_offset + 1);
-                for (let x = 0; x_offset > 0 ? (x < x_offset) : (x > x_offset); x_offset > 0 ? x++ : x--) {
-                    let x_index_offset = x_offset > 0 ? 1 : -1;
-                    let path_move = [x + x_index_offset, 0];
-                    movePath.push(path_move);
-                }
-            }
-        }
-
-        // Test for all squares between the piece and its destination
-
-        // Spaces to check
-        if (movePath.length > 0) {
-            for (let i = 0, il = movePath.length; i < il; i++) {
-                let absolute_move = addVector(board, piece.location, movePath[i]);
-                let square = getSquare(board, absolute_move);
-
-                // Piece exists
-                if (square.occupation !== null) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
 }
 
 // Return a list of valid vec2 moves relative to a piece's location.
@@ -620,21 +531,6 @@ function getTakeMoves(board, piece) {
     return moves;
 };
 
-function generateGame(id, board, white, black, turn) {
-    this.id = id;
-    this.board = board;
-    this.white = white;
-    this.black = black;
-    this.turn = turn; // True is white, false is black.
-    this.active = true;
-};
-
-// Displays a prompt, and runs a callback function after input is given. Returns the value of that function.
-function cbprompt(question, callback) {
-    let value = prompt(question);
-    return callback(value);
-}
-
 function getPieceByLocation(piece_array, vec2) {
     for (let i = 0, il = piece_array.length; i < il; i++) {
         let piece = piece_array[i];
@@ -671,47 +567,6 @@ function getValidPieces(board, colour, white, black, check) {
         return_piece_array = getDefendingPieces(board, colour, white, black);
     }
     return return_piece_array;
-}
-
-// Prompts the player to choose a valid piece on the board to move.
-function displayPieces(board, piece_array) {
-    let piece_display = "";
-
-    // Get colour pieces on board | make it get allowed moves
-    for (let i = 0, il = piece_array.length; i < il; i++) {
-        let piece = piece_array[i];
-        piece_display += `[${piece.type.id} at ${getSquare(board, piece.location).square}]${(i + 1) === il ? '.' : ','} `;
-    }
-    return piece_display;
-}
-
-function displayMoves(board, moves) {
-    let move_display = "";
-
-    for (let i = 0, il = moves.length; i < il; i++) {
-        let move = moves[i];
-        let square = getSquare(board, move);
-        let prefix = square.occupation === null ? "" : `Take ${square.occupation.type.id} at `;
-        move_display += `[${prefix}${square.square}]${i + 1 === il ? "." : ","} `;
-    }
-    return move_display;
-}
-
-// Apply checked squares to board
-function applySquareCheck(board, piece_array) {
-
-    // Apply check squares
-    for (let i = 0, il = piece_array.length; i < il; i++) {
-        let piece = piece_array[i];
-        let take_moves = getTakeMoves(board, piece);
-        let moves = getAbsoluteMoves(board, piece, take_moves);
-
-        for (let x = 0, xl = moves.length; x < xl; x++) {
-            let move = moves[x];
-            let square = getSquare(board, move);
-            square.checked[isWhite(piece.colour) + 0] = true; // Set the square to check.
-        }
-    }
 }
 
 // Returns a list of moves a piece can make to defend check.
@@ -777,6 +632,154 @@ function getDefendingPieces(board, colour, white, black) {
     return return_piece_array;
 }
 
+/*
+** Setters
+*/
+
+// one + two. Returns the new vector or null if it's too far out of range.
+function addVector(board, vec2_one, vec2_two) {
+
+    let x_offset = vec2_one[0] + vec2_two[0];
+    let y_offset = vec2_one[1] + vec2_two[1];
+    let coords = [x_offset, y_offset];
+
+    // Out of range. Cannot make a move outside the board.
+    return verifyVector(board, coords) ? coords : null;
+}
+
+// Updates the board with new positions of the pieces, returns the new board
+function updateBoard(board, piece_array) {
+
+    // For each piece in the array
+    for (let i = 0, il = piece_array.length; i < il; i++) {
+        let piece = piece_array[i];
+        let x = piece.location[0]; // Look for the x location
+        let y = piece.location[1]; // Look for the y location
+        let row = board[y]; // Board at index y
+        let square = row[x]; // Row at index x
+        square.occupation = piece;
+
+        row[x] = square; // Update the square
+        board[y] = row; // Update the row
+    }
+    applySquareCheck(board, piece_array);
+    return board;
+}
+
+// Removes a piece from a piece array and returns the updated array
+function removePiece(piece_array, piece) {
+    let updated_piece_array = [];
+
+    // Each piece
+    for (let i = 0, il = piece_array.length; i < il; i++) {
+        let iterated_piece = piece_array[i];
+
+        // Add everything but the removed piece
+        if (iterated_piece !== piece) {
+            updated_piece_array.push(iterated_piece);
+        }
+    };
+    return updated_piece_array;
+}
+
+// Apply checked squares to board
+function applySquareCheck(board, piece_array) {
+
+    // Apply check squares
+    for (let i = 0, il = piece_array.length; i < il; i++) {
+        let piece = piece_array[i];
+        let take_moves = getTakeMoves(board, piece);
+        let moves = getAbsoluteMoves(board, piece, take_moves);
+
+        for (let x = 0, xl = moves.length; x < xl; x++) {
+            let move = moves[x];
+            let square = getSquare(board, move);
+            square.checked[isWhite(piece.colour) + 0] = true; // Set the square to check.
+        }
+    }
+}
+
+/*
+** Checkers
+*/
+
+// Confirms if a set of coordinates is on the board
+function verifyVector(board, vec2) {
+    let y_maximum = board.length; // Minus one. Vectors start at 0.
+    let x_maximum = board[0].length;
+    return (vec2[0] >= 0 && vec2[0] < x_maximum) && (vec2[1] >= 0 && vec2[1] < y_maximum);
+}
+
+// Check if there's a blockage between a piece's square and the square it's moving to.
+// ToDo: maybe clean this up a little for efficiency
+function moveObstructed(board, piece, move) {
+    let movePath = [];
+
+    // Knights can jump over pieces and cannot be obstructed
+    if (piece.type.id !== "knight") {
+        let x_offset = move[0];
+        let y_offset = move[1];
+
+        // Diagonal. (Bishops, etc.)
+        if (Math.abs(x_offset) === Math.abs(y_offset)) {
+
+            x_offset = x_offset > 0 ? x_offset - 1 : x_offset + 1;
+            y_offset = y_offset > 0 ? y_offset - 1 : y_offset + 1;
+
+            for (let x = 0, y = 0; (x_offset > 0 ? (x < x_offset) : (x > x_offset)) || (y_offset > 0 ? (y < y_offset) : (y > y_offset));) {
+                let x_index_offset = x_offset > 0 ? 1 : -1;
+                let y_index_offset = y_offset > 0 ? 1 : -1;
+                let path_move = [x + x_index_offset, y + y_index_offset];
+                movePath.push(path_move);
+
+                // Increment / Decrement
+                x_offset > 0 ? x++ : x--;
+                y_offset > 0 ? y++ : y--;
+            }
+        }
+
+        // Longitudinal. (Rooks, etc.)
+        else if (x_offset === 0 || y_offset === 0) {
+
+            // Y movement
+            if (x_offset === 0) {
+                y_offset = y_offset > 0 ? (y_offset - 1) : (y_offset + 1); // Start 1 above/below the piece, don't check the piece's square
+                for (let y = 0; y_offset > 0 ? (y < y_offset) : (y > y_offset); y_offset > 0 ? y++ : y--) {
+                    let y_index_offset = y_offset > 0 ? 1 : -1;
+                    let path_move = [0, y + y_index_offset];
+                    movePath.push(path_move);
+                }
+            }
+
+            // X movement
+            else if (y_offset === 0) {
+                x_offset = x_offset > 0 ? (x_offset - 1) : (x_offset + 1);
+                for (let x = 0; x_offset > 0 ? (x < x_offset) : (x > x_offset); x_offset > 0 ? x++ : x--) {
+                    let x_index_offset = x_offset > 0 ? 1 : -1;
+                    let path_move = [x + x_index_offset, 0];
+                    movePath.push(path_move);
+                }
+            }
+        }
+
+        // Test for all squares between the piece and its destination
+
+        // Spaces to check
+        if (movePath.length > 0) {
+            for (let i = 0, il = movePath.length; i < il; i++) {
+                let absolute_move = addVector(board, piece.location, movePath[i]);
+                let square = getSquare(board, absolute_move);
+
+                // Piece exists
+                if (square.occupation !== null) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 function inCheck(board, piece_array) {
     for (let i = 0, il = piece_array.length; i < il; i++) {
         let piece = piece_array[i];
@@ -794,16 +797,17 @@ function inCheck(board, piece_array) {
     return false;
 }
 
-// Checks if moving a piece will put them in check
-function possibleCheck(board, white, black, piece, offset) {
-    let piece_array = isWhite(piece.colour) ? white : black;
-    piece.location = offset;
-    board = generateBoard();
-    updateBoard(board, white);
-    updateBoard(board, black);
-    return inCheck(board, piece_array);
+/*
+** Miscellaneous
+*/
+
+// Displays a prompt, and runs a callback function after input is given. Returns the value of that function.
+function cbprompt(question, callback) {
+    let value = prompt(question);
+    return callback(value);
 }
 
+// Starts a game
 function startGame(game) {
     let board = game.board;
     console.log(`\nStarting game '${game.id}'.`);
@@ -911,6 +915,7 @@ function startGame(game) {
     }
 }
 
+// Create values for a game
 var board = generateBoard();
 var white = generateFormation("white");
 var black = generateFormation('black');
