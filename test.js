@@ -4,8 +4,7 @@ function getInfinitePieceMoves(board, piece, offset, maximum_take_threshold, app
     let piece_counter = 0;
 
     // Coordinates
-    let x_offset = offset[0];
-    let y_offset = offset[1];
+    let x_offset = offset[0];    let y_offset = offset[1];
     let coords = addVector(board, piece.location, [x_offset, y_offset]);
     let square = coords === null ? {} : getSquare(board, coords);
 
