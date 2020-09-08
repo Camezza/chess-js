@@ -118,6 +118,7 @@ function generateGame(id, board, white, black, turn) {
 */
 
 // Displays an interface of the chess board
+// ToDo: Display square colour
 function displayBoard(board, colour, move_sequence) {
     move_sequence = move_sequence || [];
     let display_board = [];
@@ -161,9 +162,9 @@ function displayBoard(board, colour, move_sequence) {
                 display_square = 'x';
             }
 
-            if (square.checked[0] || square.checked[1]) {
+            /*if (square.checked[0] || square.checked[1]) {
                 prefix = '\x1b[31m';
-            }
+            }*/
 
             // Empty square
             if (square.occupation !== null) {
@@ -942,7 +943,7 @@ function startGame(game) {
 // 1. Get all possible moves and find the best 3. 
 // 2. Find the 3 best moves the opponent can make. Loop this and calculate the final cost for each path
 //
-function moveAI(board, colour) {
+function moveAI(board, white, black, colour) {
 
     // Return the AI's piece and the location it's moving to
     return {
@@ -952,8 +953,14 @@ function moveAI(board, colour) {
 }
 
 
-function getBestMoves(board, colour) {
+function getBestMoves(board, white, black, colour) {
+    let piece_array = isWhite(colour) ? white : black;
+    let opposing_piece_array = isWhite(colour) ? black : white;
 
+    for (let i = 0, il = piece_array.length; i < il; i++) {
+        let piece = piece_array[i];
+        let moves = getValidMoves(piece);
+    }
 }
 /*
 ** Initialisation
