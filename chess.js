@@ -104,12 +104,13 @@ function generateFormation(colour) {
 }
 
 // Creates a new game object
-function generateGame(id, board, white, black, turn) {
+function generateGame(id, board, white, black, turn, ai) {
     this.id = id;
     this.board = board;
     this.white = white;
     this.black = black;
     this.turn = turn; // True is white, false is black.
+    this.ai = ai;
     this.active = true;
 };
 
@@ -823,6 +824,8 @@ function cbprompt(question, callback) {
 // Starts a game
 function startGame(game) {
     let board = game.board;
+    let player1_colour = game.turn ? "white" : "black";
+    let player2_colour = game.turn ? "black" : "white";
     console.log(`\nStarting game '${game.id}'.`);
     console.log(`${game.turn ? "white" : "black"} will move first.\n`);
 
@@ -853,14 +856,12 @@ function startGame(game) {
                 } else console.log("\nInvalid square selected.\n"); // Invalid square (null)
             }
         }
-
-        else {
-            console.log(`No available moves. ${isWhite(colour) ? "black" : "white"} wins.`);
-        }
         return return_piece;
     }
 
     function chooseMove(piece) {
+        if (piece === null) return null;
+
         let return_move = null;
         let moves = inCheck(board, isWhite(piece.colour) ? game.white : game.black) ? getDefendingMoves(board, piece, game.white, game.black) : getValidMoves(board, piece);
         console.log(displayBoard(board, colour, moves));
@@ -911,20 +912,39 @@ function startGame(game) {
 
     while (game.active) {
         colour = game.turn ? "white" : "black";
-        let piece = choosePiece(colour); // Prompt the user to enter a piece.
+        let piece = null;
+        let move = null;
 
+        // Time for the AI to move
+        if (game.ai && colour === player2_colour) {
+            let combination = moveAI(board, game.white, game.black, player2_colour);
+            piece = combination.piece;
+            move = combination.move;
+        }
+
+        // Normal player move
+        else {
+        piece = choosePiece(colour); // Prompt the user to enter a piece.
+        move = chooseMove(piece);
+        }
         // Player can still move.
+
         if (piece !== null) {
-            let move = chooseMove(piece); // Prompt the user to choose a move.
             movePiece(piece, move); // Update the piece's new position. (CURRENTLY BROKEN, PIECES CAN MOVE ANYWHERE)
+            
+            // Clear the board & update new piece positions
             board = generateBoard();
             updateBoard(board, game.white); // Update white pieces
             updateBoard(board, game.black); // Update black pieces
+
             game.turn = !game.turn; // Change turns.
         }
 
         // No remaining moves, end the game.
-        else game.active = false;
+        else {
+            console.log(`No available moves. ${isWhite(colour) ? "black" : "white"} wins.`);
+            game.active = false;
+        }
     }
 }
 
@@ -944,6 +964,8 @@ function startGame(game) {
 // 2. Find the 3 best moves the opponent can make. Loop this and calculate the final cost for each path
 //
 function moveAI(board, white, black, colour) {
+
+    console.log("moveAI ran");
 
     // Return the AI's piece and the location it's moving to
     return {
@@ -970,5 +992,5 @@ var white = generateFormation("white");
 var black = generateFormation('black');
 board = updateBoard(board, white);
 board = updateBoard(board, black);
-let game = new generateGame("main", board, white, black, true);
+let game = new generateGame("main", board, white, black, true, true);
 startGame(game);
