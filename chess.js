@@ -996,5 +996,5 @@ var white = generateFormation("white");
 var black = generateFormation('black');
 board = updateBoard(board, white);
 board = updateBoard(board, black);
-let game = new generateGame("main", board, white, black, true, true);
+let game = new generateGame("main", board, white, black, true, false);
 startGame(game);
