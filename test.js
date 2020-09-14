@@ -1,54 +1,27 @@
-function getInfinitePieceMoves(board, piece, offset, maximum_take_threshold, applying_check) {
-    // Iteration
-    let movePath = [];
-    let piece_counter = 0;
+function movePiece(game, piece, move) {
+    let current_square = getSquare(game.board, piece.location);
+    let move_square = getSquare(game.board, move);
 
-    // Coordinates
-    let x_offset = offset[0];    let y_offset = offset[1];
-    let coords = addVector(board, piece.location, [x_offset, y_offset]);
-    let square = coords === null ? {} : getSquare(board, coords);
+    // Taking a piece
+    if (move_square.occupation !== null) {
 
-    // Misc.
-    let colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
-    let takeable = isWhite(colour) === !isWhite(piece.colour);
-
-    // Square empty, or taking a piece
-    while ((square.occupation === null || takeable || applying_check) && piece_counter < maximum_take_threshold) {
-
-        // Apply increments/decrements and add the new position
-        movePath.push([x_offset, y_offset]);
-
-        // Diagonal. (Bishops, etc.)
-        if (Math.abs(x_offset) === Math.abs(y_offset)) {
-            x_offset > 0 ? x_offset++ : x_offset--;
-            y_offset > 0 ? y_offset++ : y_offset--;
+        // White's turn, remove the black piece.
+        if (game.turn) {
+            game.black = removePiece(game.black, move_square.occupation);
         }
 
-        // Longitudinal. (Rooks, etc.)
-        else if (x_offset === 0 || y_offset === 0) {
-            // Y movement
-            if (x_offset === 0) {
-                y_offset > 0 ? y_offset++ : y_offset--;
-            }
-
-            // X movement
-            else if (y_offset === 0) {
-                x_offset > 0 ? x_offset++ : x_offset--;
-            }
+        // Black's turn, remove a white piece.
+        else {
+            game.white = removePiece(game.white, move_square.occupation);
         }
-        else return null;
-
-        // Piece can be taken
-        if (takeable || applying_check) {
-            piece_counter++;
-        }
-
-        // Update values
-        coords = addVector(board, piece.location, [x_offset, y_offset]);
-        square = coords === null ? {} : getSquare(board, coords);
-        colour = square.occupation !== undefined && square.occupation !== null ? square.occupation.colour : piece.colour;
-        takeable = isWhite(colour) === !isWhite(piece.colour);
-
     }
-    return movePath;
+
+    // It is no longer the first move
+    if (!piece.moved) {
+        piece.moved = true;
+    }
+
+    current_square.occupation = null; // Clear previous square
+    move_square.occupation = null; // Clear move square
+    piece.location = move;
 }
