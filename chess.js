@@ -701,6 +701,35 @@ function applySquareCheck(board, piece_array) {
     }
 }
 
+// This needs to return board
+function movePiece(game, piece, move) {
+    let current_square = getSquare(board, piece.location);
+    let move_square = getSquare(board, move);
+
+    // Taking a piece
+    if (move_square.occupation !== null) {
+
+        // White's turn, remove the black piece.
+        if (turn) {
+            black = removePiece(black, move_square.occupation);
+        }
+
+        // Black's turn, remove a white piece.
+        else {
+            white = removePiece(white, move_square.occupation);
+        }
+    }
+
+    // It is no longer the first move
+    if (!piece.moved) {
+        piece.moved = true;
+    }
+
+    current_square.occupation = null; // Clear previous square
+    move_square.occupation = null; // Clear move square
+    piece.location = move;
+}
+
 /*
 ** Checkers 
 */
@@ -882,34 +911,6 @@ function startGame(game) {
         return return_move;
     }
 
-    function movePiece(piece, move) {
-        let current_square = getSquare(board, piece.location);
-        let move_square = getSquare(board, move);
-
-        // Taking a piece
-        if (move_square.occupation !== null) {
-
-            // White's turn, remove the black piece.
-            if (game.turn) {
-                game.black = removePiece(game.black, move_square.occupation);
-            }
-
-            // Black's turn, remove a white piece.
-            else {
-                game.white = removePiece(game.white, move_square.occupation);
-            }
-        }
-
-        // It is no longer the first move
-        if (!piece.moved) {
-            piece.moved = true;
-        }
-
-        current_square.occupation = null; // Clear previous square
-        move_square.occupation = null; // Clear move square
-        piece.location = move;
-    }
-
     while (game.active) {
         colour = game.turn ? "white" : "black";
         let piece = null;
@@ -924,14 +925,14 @@ function startGame(game) {
 
         // Normal player move
         else {
-        piece = choosePiece(colour); // Prompt the user to enter a piece.
-        move = chooseMove(piece);
+            piece = choosePiece(colour); // Prompt the user to enter a piece.
+            move = chooseMove(piece);
         }
         // Player can still move.
 
         if (piece !== null) {
-            movePiece(piece, move); // Update the piece's new position. (CURRENTLY BROKEN, PIECES CAN MOVE ANYWHERE)
-            
+            movePiece(board, game.white, game.black, piece, move, game.turn); // Update the piece's new position. (CURRENTLY BROKEN, PIECES CAN MOVE ANYWHERE)
+
             // Clear the board & update new piece positions
             board = generateBoard();
             updateBoard(board, game.white); // Update white pieces
@@ -974,6 +975,9 @@ function moveAI(board, white, black, colour) {
     }
 }
 
+function getBoardConfiguration(board, piece, move) {
+
+}
 
 function getBestMoves(board, white, black, colour) {
     let piece_array = isWhite(colour) ? white : black;
