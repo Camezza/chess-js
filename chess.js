@@ -701,7 +701,6 @@ function applySquareCheck(board, piece_array) {
     }
 }
 
-// This needs to return board
 function movePiece(game, piece, move) {
     let current_square = getSquare(board, piece.location);
     let move_square = getSquare(board, move);
@@ -710,13 +709,13 @@ function movePiece(game, piece, move) {
     if (move_square.occupation !== null) {
 
         // White's turn, remove the black piece.
-        if (turn) {
-            black = removePiece(black, move_square.occupation);
+        if (game.turn) {
+            game.black = removePiece(game.black, move_square.occupation);
         }
 
         // Black's turn, remove a white piece.
         else {
-            white = removePiece(white, move_square.occupation);
+            game.white = removePiece(game.white, move_square.occupation);
         }
     }
 
@@ -918,7 +917,7 @@ function startGame(game) {
 
         // Time for the AI to move
         if (game.ai && colour === player2_colour) {
-            let combination = moveAI(board, game.white, game.black, player2_colour);
+            let combination = moveAI(game, player2_colour);
             piece = combination.piece;
             move = combination.move;
         }
@@ -931,7 +930,7 @@ function startGame(game) {
         // Player can still move.
 
         if (piece !== null) {
-            movePiece(board, game.white, game.black, piece, move, game.turn); // Update the piece's new position. (CURRENTLY BROKEN, PIECES CAN MOVE ANYWHERE)
+            movePiece(game, piece, move); // Update the piece's new position. (CURRENTLY BROKEN, PIECES CAN MOVE ANYWHERE)
 
             // Clear the board & update new piece positions
             board = generateBoard();
@@ -964,7 +963,7 @@ function startGame(game) {
 // 1. Get all possible moves and find the best 3. 
 // 2. Find the 3 best moves the opponent can make. Loop this and calculate the final cost for each path
 //
-function moveAI(board, white, black, colour) {
+function moveAI(game, colour) {
 
     console.log("moveAI ran");
 
@@ -975,11 +974,8 @@ function moveAI(board, white, black, colour) {
     }
 }
 
-function getBoardConfiguration(board, piece, move) {
 
-}
-
-function getBestMoves(board, white, black, colour) {
+function getBestMoves(game, colour) {
     let piece_array = isWhite(colour) ? white : black;
     let opposing_piece_array = isWhite(colour) ? black : white;
 
@@ -996,5 +992,5 @@ var white = generateFormation("white");
 var black = generateFormation('black');
 board = updateBoard(board, white);
 board = updateBoard(board, black);
-let game = new generateGame("main", board, white, black, true, true);
+let game = new generateGame("main", board, white, black, true, false);
 startGame(game);
