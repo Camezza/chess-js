@@ -774,7 +774,7 @@ function movePiece(game, piece, move) {
     move_square.occupation = null; // Clear move square
     piece.location = move;
     console.log(piece.location);
-    console.log(game);
+    console.log(game.turn ? game.white : game.black);
 }
 
 /*
