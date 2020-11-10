@@ -211,6 +211,14 @@ function displayBoard(board, colour, move_sequence) {
     // For white perspective: Row loop descending (--), square loop ascending (++).
     */
 
+    /*
+    let horizontal_display = `   `;
+    for (let i = 0, il = board.length; i < il; i++) {
+        horizontal_display += `${"\x1b[31m"}${horizontal_order[i]}${"\x1b[0m"}   `;
+    }
+    display_board.push(horizontal_display);
+    */
+
     // Every row
     function whitePerspective() {
         bigrow.unshift("   "); // Left spacer for grid letters
@@ -280,60 +288,6 @@ function displayMoves(board, moves) {
         move_display += `[${prefix}${square.square}]${i + 1 === il ? "." : ","} `;
     }
     return move_display;
-}
-
-function choosePiece(game, colour) {
-    let return_piece = null;
-    let piece_array = getValidPieces(game.board, colour, game.white, game.black, inCheck(game.board, isWhite(colour) ? game.white : game.black));
-    let piece_display = displayPieces(game.board, piece_array);
-
-    console.log(displayBoard(game.board, colour));
-
-    // Moves left
-    if (piece_array.length > 0) {
-        console.log(`Currently, ${inCheck(game.board, isWhite(colour) ? game.white : game.black) ? "you are" : "you are not"} in check.\nSelect a piece by typing its square. (Example: A1)\nMoveable pieces: ${piece_display}`);
-
-        // Prompt again if invalid selection given
-        while (return_piece === null) {
-            let selection = cbprompt("> ", getLocationBySquare);
-
-            // Valid selection given
-            if (selection !== null) {
-                let piece = getPieceByLocation(piece_array, selection);
-
-                // Match found
-                if (piece !== null) {
-                    return_piece = piece;
-                    break;
-                } else console.log("\nInvalid piece selected.\n"); // Invalid piece (null)
-            } else console.log("\nInvalid square selected.\n"); // Invalid square (null)
-        }
-    }
-    return return_piece;
-}
-
-function chooseMove(game, piece) {
-    if (piece === null) return null;
-
-    let colour = game.turn ? "white" : "black";
-    let return_move = null;
-    let moves = inCheck(game.board, isWhite(piece.colour) ? game.white : game.black) ? getDefendingMoves(game.board, piece, game.white, game.black) : getValidMoves(game.board, piece);
-    console.log(displayBoard(game.board, colour, moves));
-    console.log(`\nYou selected your ${piece.type.id}. No taking it back.\nMove by typing the square to move to. (Example: A1)\n\nPossible moves: ${displayMoves(game.board, moves)}`);
-
-    // Prompt again if invalid selection given
-    while (return_move === null) {
-        let selection = cbprompt("> ", getLocationBySquare);
-
-        // Valid selection given
-        if (selection !== null) {
-            return_move = selection;
-        }
-
-        else console.log("Invalid square selected.");
-
-    }
-    return return_move;
 }
 
 /*
@@ -747,8 +701,9 @@ function applySquareCheck(board, piece_array) {
     }
 }
 
-<<<<<<< HEAD
+// This needs to return board
 function movePiece(game, piece, move) {
+    console.log(piece);
     let current_square = getSquare(game.board, piece.location);
     let move_square = getSquare(game.board, move);
 
@@ -756,7 +711,7 @@ function movePiece(game, piece, move) {
     if (move_square.occupation !== null) {
 
         // White's turn, remove the black piece.
-        if (game.turn) {
+        if (turn) {
             game.black = removePiece(game.black, move_square.occupation);
         }
 
@@ -774,12 +729,8 @@ function movePiece(game, piece, move) {
     current_square.occupation = null; // Clear previous square
     move_square.occupation = null; // Clear move square
     piece.location = move;
-    console.log(piece.location);
-    console.log(game.turn ? game.white : game.black);
 }
 
-=======
->>>>>>> parent of cc495f4... Update chess.js
 /*
 ** Checkers 
 */
@@ -908,8 +859,6 @@ function startGame(game) {
     console.log(`\nStarting game '${game.id}'.`);
     console.log(`${game.turn ? "white" : "black"} will move first.\n`);
 
-<<<<<<< HEAD
-=======
     function choosePiece(colour) {
         let return_piece = null;
         let piece_array = getValidPieces(board, colour, game.white, game.black, inCheck(board, isWhite(colour) ? game.white : game.black));
@@ -963,35 +912,6 @@ function startGame(game) {
         return return_move;
     }
 
-    function movePiece(piece, move) {
-        let current_square = getSquare(board, piece.location);
-        let move_square = getSquare(board, move);
-
-        // Taking a piece
-        if (move_square.occupation !== null) {
-
-            // White's turn, remove the black piece.
-            if (game.turn) {
-                game.black = removePiece(game.black, move_square.occupation);
-            }
-
-            // Black's turn, remove a white piece.
-            else {
-                game.white = removePiece(game.white, move_square.occupation);
-            }
-        }
-
-        // It is no longer the first move
-        if (!piece.moved) {
-            piece.moved = true;
-        }
-
-        current_square.occupation = null; // Clear previous square
-        move_square.occupation = null; // Clear move square
-        piece.location = move;
-    }
-
->>>>>>> parent of cc495f4... Update chess.js
     while (game.active) {
         colour = game.turn ? "white" : "black";
         let piece = null;
@@ -999,31 +919,21 @@ function startGame(game) {
 
         // Time for the AI to move
         if (game.ai && colour === player2_colour) {
-            let combination = moveAI(game, player2_colour);
+            let combination = moveAI(board, game.white, game.black, player2_colour);
             piece = combination.piece;
             move = combination.move;
         }
 
         // Normal player move
         else {
-<<<<<<< HEAD
-            piece = choosePiece(game, colour); // Prompt the user to enter a piece.
-            move = chooseMove(game, piece);
-=======
-        piece = choosePiece(colour); // Prompt the user to enter a piece.
-        move = chooseMove(piece);
->>>>>>> parent of cc495f4... Update chess.js
+            piece = choosePiece(colour); // Prompt the user to enter a piece.
+            move = chooseMove(piece);
         }
-        // Player can still move.
 
+        // Player can still move.
         if (piece !== null) {
-<<<<<<< HEAD
             movePiece(game, piece, move); // Update the piece's new position. (CURRENTLY BROKEN, PIECES CAN MOVE ANYWHERE)
 
-=======
-            movePiece(piece, move); // Update the piece's new position. (CURRENTLY BROKEN, PIECES CAN MOVE ANYWHERE)
-            
->>>>>>> parent of cc495f4... Update chess.js
             // Clear the board & update new piece positions
             board = generateBoard();
             updateBoard(board, game.white); // Update white pieces
@@ -1055,7 +965,7 @@ function startGame(game) {
 // 1. Get all possible moves and find the best 3. 
 // 2. Find the 3 best moves the opponent can make. Loop this and calculate the final cost for each path
 //
-function moveAI(game, colour) {
+function moveAI(board, white, black, colour) {
 
     console.log("moveAI ran");
 
@@ -1066,8 +976,11 @@ function moveAI(game, colour) {
     }
 }
 
+function getBoardConfiguration(board, piece, move) {
 
-function getBestMoves(game, colour) {
+}
+
+function getBestMoves(board, white, black, colour) {
     let piece_array = isWhite(colour) ? white : black;
     let opposing_piece_array = isWhite(colour) ? black : white;
 
