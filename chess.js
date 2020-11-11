@@ -546,8 +546,8 @@ function getPieceByLocation(piece_array, vec2) {
 }
 
 // Gets the valid pieces that a player can use to move during a turn.
-function getValidPieces(board, colour, white, black, check) {
-    let piece_array = isWhite(colour) ? white : black;
+function getValidPieces(board, colour, game, check) {
+    let piece_array = isWhite(colour) ? game.white : game.black;
     let return_piece_array = [];
 
     // Not in check, get all pieces that can move
@@ -860,7 +860,7 @@ function startGame(game) {
 
     function choosePiece(colour) {
         let return_piece = null;
-        let piece_array = getValidPieces(board, colour, game.white, game.black, inCheck(board, isWhite(colour) ? game.white : game.black));
+        let piece_array = getValidPieces(board, colour, game, inCheck(board, isWhite(colour) ? game.white : game.black));
         let piece_display = displayPieces(board, piece_array);
 
         console.log(displayBoard(board, colour));
@@ -967,11 +967,15 @@ function startGame(game) {
 function moveAI(board, game, colour) {
 
     console.log("moveAI ran");
+    let pieces = getValidPieces(board, colour, game, inCheck(board, isWhite(colour) ? game.white : game.black));
+    let piece = pieces[Math.floor(Math.random() * pieces.length)];
+    let moves = getValidMoves(board, piece);
+    let move = moves[Math.floor(Math.random() * moves.length)];
 
     // Return the AI's piece and the location it's moving to
     return {
-        piece: null,
-        move: null,
+        piece: piece,
+        move: move,
     }
 }
 
