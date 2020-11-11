@@ -703,7 +703,6 @@ function applySquareCheck(board, piece_array) {
 
 // This needs to return board
 function movePiece(game, piece, move) {
-    console.log(piece);
     let current_square = getSquare(game.board, piece.location);
     let move_square = getSquare(game.board, move);
 
@@ -919,7 +918,7 @@ function startGame(game) {
 
         // Time for the AI to move
         if (game.ai && colour === player2_colour) {
-            let combination = moveAI(board, game.white, game.black, player2_colour);
+            let combination = moveAI(board, game, player2_colour);
             piece = combination.piece;
             move = combination.move;
         }
@@ -965,7 +964,7 @@ function startGame(game) {
 // 1. Get all possible moves and find the best 3. 
 // 2. Find the 3 best moves the opponent can make. Loop this and calculate the final cost for each path
 //
-function moveAI(board, white, black, colour) {
+function moveAI(board, game, colour) {
 
     console.log("moveAI ran");
 
@@ -976,19 +975,12 @@ function moveAI(board, white, black, colour) {
     }
 }
 
+// Stub
+// ToDo: this pls
 function getBoardConfiguration(board, piece, move) {
 
 }
 
-function getBestMoves(board, white, black, colour) {
-    let piece_array = isWhite(colour) ? white : black;
-    let opposing_piece_array = isWhite(colour) ? black : white;
-
-    for (let i = 0, il = piece_array.length; i < il; i++) {
-        let piece = piece_array[i];
-        let moves = getValidMoves(piece);
-    }
-}
 /*
 ** Initialisation
 */
@@ -997,5 +989,5 @@ var white = generateFormation("white");
 var black = generateFormation('black');
 board = updateBoard(board, white);
 board = updateBoard(board, black);
-let game = new generateGame("main", board, white, black, true, false);
+let game = new generateGame("main", board, white, black, true, true);
 startGame(game);
