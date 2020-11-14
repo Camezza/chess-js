@@ -3,13 +3,15 @@ const prompt = require('prompt-sync')();
 const horizontal_order = ["A", "B", "C", "D", "E", "F", "G", "H"];
 const vertical_order = ["1", "2", "3", "4", "5", "6", "7", "8"];
 
-function type(id, infinite, cost, moves, firstmoves, takemoves) {
-    this.id = id;
-    this.infinite = infinite;
-    this.cost = cost;
-    this.moves = moves;
-    this.firstmoves = firstmoves;
-    this.takemoves = takemoves;
+class type {
+    constructor(id, infinite, cost, moves, firstmoves, takemoves) {
+        this.id = id;
+        this.infinite = infinite;
+        this.cost = cost;
+        this.moves = moves;
+        this.firstmoves = firstmoves;
+        this.takemoves = takemoves;
+    }
 }
 
 const pieces = {
@@ -25,28 +27,45 @@ const pieces = {
 ** Object generation
 */
 
-// Creates a chess piece object
-function generatePiece(type, colour, vec2) {
-
-    // Reverse pawn direction for black
-    if (type.id === "pawn" && !isWhite(colour)) {
-        type.moves[0] = [0, -1];
-        type.firstmoves = [
-            [0, -2]
-        ];
-        type.takemoves = [
-            [1, -1],
-            [-1, -1]
-        ];
+class activePiece {
+    constructor(type, colour, location) {
+        this.configure();
+        this.type = type;
+        this.colour = colour;
+        this.location = location;
+        this.moved = false;
     }
 
-    return {
-        "type": type,
-        "colour": colour,
-        "location": vec2,
-        "moved": false,
-    };
-};
+
+    /*
+THIS
+WILL
+NOT 
+WORK
+PROPERLY
+NEEDS
+TO
+REVERSE
+REFEREN CING
+INCORRET
+
+
+
+    */
+    configure() {
+        // Reverse pawn direction for black
+        if (type.id === "pawn" && !isWhite(colour)) {
+            type.moves[0] = [0, -1];
+            type.firstmoves = [
+                [0, -2]
+            ];
+            type.takemoves = [
+                [1, -1],
+                [-1, -1]
+            ];
+        }
+    }
+}
 
 // Creates an empty board configuration
 function generateBoard() {
@@ -86,32 +105,34 @@ function generateFormation(colour) {
     }
 
     // Generate the first row of pieces
-    formation.push(generatePiece(pieces.rook(), colour, [0, primary_row]));
-    formation.push(generatePiece(pieces.knight(), colour, [1, primary_row]));
-    formation.push(generatePiece(pieces.bishop(), colour, [2, primary_row]));
-    formation.push(generatePiece(pieces.king(), colour, [3, primary_row]));
-    formation.push(generatePiece(pieces.queen(), colour, [4, primary_row]));
-    formation.push(generatePiece(pieces.bishop(), colour, [5, primary_row]));
-    formation.push(generatePiece(pieces.knight(), colour, [6, primary_row]));
-    formation.push(generatePiece(pieces.rook(), colour, [7, primary_row]));
+    formation.push(new activePiece(pieces.rook(), colour, [0, primary_row]));
+    formation.push(new activePiece(pieces.knight(), colour, [1, primary_row]));
+    formation.push(new activePiece(pieces.bishop(), colour, [2, primary_row]));
+    formation.push(new activePiece(pieces.king(), colour, [3, primary_row]));
+    formation.push(new activePiece(pieces.queen(), colour, [4, primary_row]));
+    formation.push(new activePiece(pieces.bishop(), colour, [5, primary_row]));
+    formation.push(new activePiece(pieces.knight(), colour, [6, primary_row]));
+    formation.push(new activePiece(pieces.rook(), colour, [7, primary_row]));
 
     // Generate a row of pawns
     for (let x = 0, max_x = 8; x < max_x; x++) {
-        let piece = generatePiece(pieces.pawn(), colour, [x, pawn_row]);
+        let piece = new activePiece(pieces.pawn(), colour, [x, pawn_row]);
         formation.push(piece)
     }
     return formation;
 }
 
 // Creates a new game object
-function generateGame(id, board, white, black, turn, ai) {
-    this.id = id;
-    this.board = board;
-    this.white = white;
-    this.black = black;
-    this.turn = turn; // True is white, false is black.
-    this.ai = ai;
-    this.active = true;
+class activeGame {
+    constructor(id, board, white, black, turn, ai) {
+        this.id = id;
+        this.board = board;
+        this.white = white;
+        this.black = black;
+        this.turn = turn; // True is white, false is black.
+        this.ai = ai;
+        this.active = true;
+    }
 };
 
 /*
@@ -677,8 +698,9 @@ function removePiece(piece_array, piece) {
         let iterated_piece = piece_array[i];
 
         // Add everything but the removed piece
-        if (iterated_piece !== piece) {
+        if (iterated_piece !== piece) { // CANNOT COMPARE OBJECTS
             updated_piece_array.push(iterated_piece);
+            console.log(`A ${iterated_piece.colour} ${iterated_piece.type.id}`);
         }
     };
     return updated_piece_array;
@@ -710,7 +732,7 @@ function movePiece(game, piece, move) {
     if (move_square.occupation !== null) {
 
         // White's turn, remove the black piece.
-        if (turn) {
+        if (game.turn) {
             game.black = removePiece(game.black, move_square.occupation);
         }
 
@@ -993,5 +1015,5 @@ var white = generateFormation("white");
 var black = generateFormation('black');
 board = updateBoard(board, white);
 board = updateBoard(board, black);
-let game = new generateGame("main", board, white, black, true, true);
+let game = new activeGame("main", board, white, black, true, true);
 startGame(game);
